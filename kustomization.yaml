@@ -1,0 +1,13 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+resources:
+- manifests/nextcloud-ss.yaml
+- manifests/nextcloud-svc.yaml
+- manifests/nats.yaml
+- manifests/dispatcher.yaml
+- manifests/worker.yaml
+- manifests/ingress.yaml
+images:
+- name: WORKER_IMAGE
+  newName: localhost:5000/pkebs-worker
+  newTag: latest

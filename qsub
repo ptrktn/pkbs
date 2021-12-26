@@ -1,0 +1,51 @@
+#!/bin/bash
+
+NS=${PKEBS_NS:-pkebs}
+
+errr() {
+	local message=$1
+
+	echo "Error: $message" >&2
+	exit 1
+}
+
+usage() {
+	echo "Usage: qsub PAYLOAD"
+	exit 1
+}
+
+submit_job() {
+	local src=$1
+	local dst=$2
+ 	local bytes=$(stat -c %s $src)
+
+	# NATS message payload by default is up to 1 MB
+	[ 1000000 -lt $bytes ] && errr "File $src is too large: $bytes bytes"
+
+	kubectl -n $NS cp $src dispatcher:${dst} || errr "File transfer failed"
+	# FIXME -N
+	kubectl -n $NS exec -it dispatcher -- /usr/src/app/dispatcher.py $dst || errr "Dispatch failed"
+}
+
+qsub() {
+	local src=$1
+	local dst=$(mktemp -u -t qsub-XXXXXXXXXX)
+
+	if [ -f "$src" ] ; then
+		submit_job $src $dst
+	elif [ -d "$src" ] ; then
+		local runfile=${src}/run.sh
+		[ -f $runfile ] || errr "File $runfile not found"
+		dst=${dst}.zip
+		( cd $src && zip -9 -q -r $dst . ) || errr "Creating zip file failed"
+		submit_job $dst $dst
+	else
+		errr "Unsupported payload type: $src"
+	fi
+}
+
+[ 1 -ne $# ] && usage
+
+qsub "$1"
+
+exit $?

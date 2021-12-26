@@ -1,0 +1,43 @@
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: nextcloud-ss
+spec:
+  serviceName: nextcloud
+  replicas: 1
+  selector:
+    matchLabels:
+      app: nextcloud
+  template:
+    metadata:
+      labels:
+        app: nextcloud
+    spec:
+      containers:
+        - name: nextcloud
+          image: nextcloud
+          imagePullPolicy: IfNotPresent
+          env:
+          #- name: OVERWRITEWEBROOT
+          #  value: /storage
+          # env:
+          #   - name: POSTGRES_PASSWORD
+          #     valueFrom:
+          #       secretKeyRef:
+          #         name: uhdowk-secret
+          #         key: POSTGRES_PASSWORD
+          ports:
+            - name: web
+              containerPort: 80
+          volumeMounts:
+            - name: nextcloud-storage
+              mountPath: /var/www/html
+  volumeClaimTemplates:
+    - metadata:
+        name: nextcloud-storage
+      spec:
+        accessModes: ["ReadWriteOnce"]
+        storageClassName: local-path
+        resources:
+          requests:
+            storage: 100Mi
