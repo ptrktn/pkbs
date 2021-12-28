@@ -18,8 +18,14 @@ spec:
           image: nextcloud
           imagePullPolicy: IfNotPresent
           env:
-          #- name: OVERWRITEWEBROOT
-          #  value: /storage
+          - name: SQLITE_DATABASE
+            value: mynextclouddb
+          - name: NEXTCLOUD_ADMIN_USER
+            value: admin
+          - name: NEXTCLOUD_ADMIN_PASSWORD
+            value: admin
+          - name: NEXTCLOUD_TRUSTED_DOMAINS
+            value: nextcloud-svc 10.*
           # env:
           #   - name: POSTGRES_PASSWORD
           #     valueFrom:

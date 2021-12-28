@@ -25,3 +25,15 @@ spec:
           valueFrom:
             fieldRef:
               fieldPath: metadata.namespace
+        - name: WEBDAV_URL
+          value: http://nextcloud-svc/remote.php/dav/files
+        # FIXME secrets
+        - name: WEBDAV_USER
+          value: admin
+        - name: WEBDAV_PASSWD
+          value: admin
+        - name: WEBDAV_PATH
+          value: pkebs
+        - name: WEBDAV_UPLOAD
+          value: zip
+

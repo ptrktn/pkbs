@@ -2,7 +2,7 @@ MODULE      = pkebs
 NS          = $(MODULE)
 NATS_SERVER = $(HOME)/.local/bin/nats-server
 NATS_CLIENT = $(HOME)/.local/bin/nats
-REGISTRY    = localhost:5000
+REGISTRY    = registry.localdomain:5000
 
 .PHONY: install
 install: $(NATS_SERVER) $(NATS_CLIENT)
@@ -46,7 +46,7 @@ clean-deploy:
 
 .PHONY: bootstrap-k3s
 bootstrap-k3s:
-	curl -sfL https://get.k3s.io | tee k3s_install.sh | sh -s - server --write-kubeconfig-mode "0644"
+	curl -sfL https://get.k3s.io | tee k3s_install.sh | sh -s - server --write-kubeconfig-mode "0644" --cluster-init
 	install -d $(HOME)/.kube
 	install -m 0600 /etc/rancher/k3s/k3s.yaml $(HOME)/.kube/config
 	$(MAKE) deploy
@@ -71,7 +71,8 @@ stop-registry:
 	(docker ps | grep -qw registry) && docker container stop registry
 
 .PHONY: build
-build: nats
+build:
+	for i in *.py ; do echo Checking file $$i ; python3 -m py_compile $$i || exit 1 ; test -x "$$i" || exit 1 ; done ; rm -fr __pycache__
 	docker build . -t $(MODULE)-worker
 	docker tag $(MODULE)-worker $(REGISTRY)/$(MODULE)-worker
 	docker push $(REGISTRY)/$(MODULE)-worker
@@ -80,6 +81,8 @@ build: nats
 clean:
 	rm -f nats-server.zip nats-client.zip k3s_install.sh nats
 
-test:
-	bash test.sh
-
+.PHONY: xreload
+xreload:
+	kubectl -n pkebs delete pod --ignore-not-found=true dispatcher
+	kubectl -n pkebs scale --replicas=0 deployment worker-dep
+	$(MAKE) build deploy

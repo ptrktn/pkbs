@@ -17,68 +17,46 @@
 #
 
 import argparse
-import os
 import sys
+import os
 import time
 import asyncio
 import nats
-import nanoid
 from nats.errors import TimeoutError
 
 
 def mylog(message):
     print(f"{time.strftime('%Y-%m-%dT%H:%M:%S', time.localtime())} {message}")
     sys.stdout.flush()
+    if cfg["syslog"]:
+        os.system(f"logger '{message}'")
 
 
-async def main(argv):
+async def main():
     parser = argparse.ArgumentParser()
     parser.add_argument('--creds', default="")
-    parser.add_argument('-c', '--command', default="")
-    parser.add_argument('-N', '--name', default="qsub")
-    parser.add_argument('-p', '--path', default=os.getenv("WEBDAV_PATH", "pkebs"))
     parser.add_argument('-q', '--queue', default="jobs")
     parser.add_argument('-s', '--servers', default="nats")
-    parser.add_argument('-u', '--upload', default=os.getenv("WEBDAV_UPLOAD", "zip"), help="one of files, zip or none")
+    parser.add_argument("--syslog", action="store_true", dest="syslog", default=False)
     parser.add_argument('--token', default="")
-    parser.add_argument("file", metavar="FILE", type=str, nargs='?')
+    parser.add_argument('-v', '--verbose', action="store_true", default=False)
     args, unknown = parser.parse_known_args()
 
+    if args.syslog:
+        cfg["syslog"] = True
+
     async def error_cb(e):
-        mylog(f"Error: {e}")
+        # mylog("Error:", e)
+        pass
 
     async def reconnected_cb():
         mylog(f"Connected to NATS at {nc.connected_url.netloc}...")
-
-    jobid = f"{args.name}-{nanoid.generate()}"
 
     options = {
         "error_cb": error_cb,
         "reconnected_cb": reconnected_cb
     }
 
-    headers = {
-        "jobid": jobid,
-        "name": args.name,
-        "path": args.path,
-        "upload": args.upload.lower()
-    }
-
-    if args.file:
-        if os.path.isfile(args.file):
-            with open(args.file, "rb") as fp:
-                data = fp.read()
-            headers["filename"] = os.path.basename(args.file)
-            headers["command"] = args.command
-        else:
-            mylog(f"Error: file {args.file} not found.")
-            sys.exit(1)
-    elif len(args.command):
-        data = args.command.encode()
-    else:
-        # FIXME
-        sys.exit(1)
-            
     if len(args.creds) > 0:
         options["user_credentials"] = args.creds
 
@@ -90,21 +68,26 @@ async def main(argv):
             options['servers'] = args.servers
 
         nc = await nats.connect(**options)
+        jsm = nc.jsm()
     except Exception as e:
         mylog(e)
         sys.exit(1)
-        
+
+    consumer = f"workers"
+    sname = f"{args.queue}-stream"
+    
     # Create JetStream context.
     js = nc.jetstream()
 
     # Persist messages on jobs' queue (i.e, subject in Jetstream).
-    await js.add_stream(name=f"{args.queue}-stream", subjects=[args.queue])
-    ack = await js.publish(args.queue, data, headers=headers)
-    await nc.close()
-
-    print(jobid)
-    sys.stdout.flush()
-
+    await js.add_stream(name=sname, subjects=[args.queue])
+    s = await jsm.stream_info(sname)
+    c = await jsm.consumer_info(sname, consumer)
+    if args.verbose:
+        print(s)
+        print(c)
+    print(f"{s.config.name} messages {s.state.messages} pending {c.num_pending}")
+    await nc.close()        
 
 if __name__ == '__main__':
-    asyncio.run(main(sys.argv[1:]))
+    asyncio.run(main())

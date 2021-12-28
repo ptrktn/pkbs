@@ -9,5 +9,5 @@ resources:
 - manifests/ingress.yaml
 images:
 - name: WORKER_IMAGE
-  newName: localhost:5000/pkebs-worker
+  newName: registry.localdomain/pkebs-worker
   newTag: latest
