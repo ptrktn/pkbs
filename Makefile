@@ -2,7 +2,8 @@ MODULE      = pkebs
 NS          = $(MODULE)
 NATS_SERVER = $(HOME)/.local/bin/nats-server
 NATS_CLIENT = $(HOME)/.local/bin/nats
-REGISTRY    = registry.localdomain:5000
+REGISTRY    = registry.localdomain
+XREGISTRY   = $(REGISTRY):5000
 
 .PHONY: install
 install: $(NATS_SERVER) $(NATS_CLIENT)
@@ -74,8 +75,8 @@ stop-registry:
 build:
 	for i in *.py ; do echo Checking file $$i ; python3 -m py_compile $$i || exit 1 ; test -x "$$i" || exit 1 ; done ; rm -fr __pycache__
 	docker build . -t $(MODULE)-worker
-	docker tag $(MODULE)-worker $(REGISTRY)/$(MODULE)-worker
-	docker push $(REGISTRY)/$(MODULE)-worker
+	docker tag $(MODULE)-worker $(XREGISTRY)/$(MODULE)-worker
+	docker push $(XREGISTRY)/$(MODULE)-worker
 
 .PHONY: clean
 clean:
@@ -86,3 +87,7 @@ xreload:
 	kubectl -n pkebs delete pod --ignore-not-found=true dispatcher
 	kubectl -n pkebs scale --replicas=0 deployment worker-dep
 	$(MAKE) build deploy
+
+.PHONY: reconfigure-registry
+reconfigure-registry:
+	kustomize edit set image WORKER_IMAGE=$(REGISTRY)/pkebs-worker:latest
