@@ -61,7 +61,7 @@ HTTPConnection.debuglevel = 1
 """
 
 def webdav_mkdir(url, user, passwd, path):
-    r = requests.request('MKCOL', f"{url}{path}", auth=(user, passwd))
+    r = requests.request('MKCOL', f"{url}/{user}/{path}", auth=(user, passwd))
     if 201 == print(r.status_code):
         print(f"Folder {folder} has been created")
     elif 405 == print(r.status_code):
@@ -88,7 +88,7 @@ def webdav_upload(url, user, passwd, path, filename, mkdirs=True):
         data = fp.read()
 
     r = requests.put(
-        f"{url}/{path}/{os.path.basename(filename)}",
+        f"{url}/{user}/{path}/{os.path.basename(filename)}",
         data=data,
         headers={
             'Content-type': 'application/octet-stream',
@@ -230,13 +230,12 @@ async def main():
         user = os.getenv("WEBDAV_USER", "admin")
         passwd = os.getenv("WEBDAV_PASSWD", "admin")
         url = os.getenv("WEBDAV_URL", "http://nextcloud-svc/remote.php/dav/files")
-        svc = f"{url}/{user}"
 
         if filename and "zip" == upload:
             zipname = os.path.join(os.path.dirname(sandbox), f"{jobid}.zip")
             zip_dir(zipname, sandbox)
-            status = webdav_upload(svc, user, passwd, path, zipname)
-            mylog(f"Upload: server {svc} user {user} path {path} file {zipname} success={status}")
+            status = webdav_upload(url, user, passwd, path, zipname)
+            mylog(f"Upload: server {url} user {user} path {path} file {zipname} success={status}")
             # FIXME cleanup
         elif filename and "files" == upload:
             for root, subdirs, files in os.walk(sandbox):
@@ -249,7 +248,7 @@ async def main():
                 for fname in files:
                     xfile = os.path.join(path, jobid, os.path.join(root, fname)[1+len(sandbox):])
                     mylog(f"upload {xfile}")
-                    webdav_upload(svc, user, passwd, os.path.dirname(xfile), os.path.join(root, fname), True)
+                    webdav_upload(url, user, passwd, os.path.dirname(xfile), os.path.join(root, fname))
         else:
             mylog("The build-in upload is skipped")
         mylog(f"Processing {jobid} is completed")
