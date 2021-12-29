@@ -3,9 +3,11 @@ kind: Pod
 metadata:
   name: dispatcher
 spec:
-      containers:
-        - name: dispatcher
-          image: WORKER_IMAGE
-          imagePullPolicy: Always
-          command: ["/bin/sleep"]
-          args: ["365d"]
+  containers:
+    - name: dispatcher
+      image: WORKER_IMAGE
+      imagePullPolicy: Always
+      command: ["/bin/sleep", "365d"]
+      envFrom:
+      - configMapRef:
+          name: env-config

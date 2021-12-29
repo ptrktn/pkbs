@@ -35,10 +35,18 @@ stop-nats: $(NATS_SERVER)
 xdeps:
 	sudo apt-get install -y netcat screen
 
-.PHONY: deploy
-deploy:
+.PHONY: namespace
+namespace:
 	kubectl create ns $(NS) 2> /dev/null || true
 	kubectl get ns $(NS)
+
+.PHONY: configmap
+configmap:
+	kubectl create configmap env-config --from-env-file=env-config --dry-run=client -o yaml | kubectl -n $(NS) apply -f -
+
+.PHONY: deploy
+deploy: namespace configmap
+	kustomize build . > /dev/null
 	kustomize build . | kubectl -n $(NS) apply -f -
 
 .PHONY: clean-deploy
@@ -91,3 +99,5 @@ xreload:
 .PHONY: reconfigure-registry
 reconfigure-registry:
 	kustomize edit set image WORKER_IMAGE=$(REGISTRY)/pkebs-worker:latest
+
+

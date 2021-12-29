@@ -21,17 +21,19 @@ spec:
           - name: SQLITE_DATABASE
             value: mynextclouddb
           - name: NEXTCLOUD_ADMIN_USER
-            value: admin
+            valueFrom:
+              configMapKeyRef:
+                name: env-config
+                key: WEBDAV_USER
           - name: NEXTCLOUD_ADMIN_PASSWORD
-            value: admin
+            valueFrom:
+              configMapKeyRef:
+                name: env-config
+                key: WEBDAV_PASSWD
+          # nextcloud-svc is required for pods
+          # 10.* is required to access the service from local network
           - name: NEXTCLOUD_TRUSTED_DOMAINS
             value: nextcloud-svc 10.*
-          # env:
-          #   - name: POSTGRES_PASSWORD
-          #     valueFrom:
-          #       secretKeyRef:
-          #         name: uhdowk-secret
-          #         key: POSTGRES_PASSWORD
           ports:
             - name: web
               containerPort: 80
