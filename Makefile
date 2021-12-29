@@ -25,7 +25,8 @@ nats:
 
 .PHONY: start-nats
 start-nats: $(NATS_SERVER)
-	nc -zv localhost 4222 || screen -S nats -d -m $(NATS_SERVER) -js
+	nc -zv localhost 14222 > /dev/null 2>&1 || (screen -S nats -d -m $(NATS_SERVER) -p 14222 -js && sleep 5)
+	nc -zv localhost 14222
 
 .PHONY: stop-nats
 stop-nats: $(NATS_SERVER)
@@ -106,5 +107,3 @@ configure-k3s-agent:
 	timeout 30s ssh -l root $(AGENT_NODE) /bin/true || (test "" != "$(SSHPASS)" && sshpass -v -e ssh-copy-id -l root $(AGENT_NODE))
 	scp -q misc/configure-k3s-alpine-agent.sh root@$(AGENT_NODE):
 	ssh -l root $(AGENT_NODE) "K3S_TOKEN='`sudo cat /var/lib/rancher/k3s/server/node-token`' K3S_URL=https://`hostname -I | awk '{print $$1}'`:6443 sh ./configure-k3s-alpine-agent.sh"
-
-#	ssh -l root $(AGENT_NODE) "curl -sfL https://get.k3s.io | K3S_TOKEN='`sudo cat /var/lib/rancher/k3s/server/node-token`' K3S_URL=https://`hostname -I | awk '{print $$1}'`:6443 sh -s - agent"
