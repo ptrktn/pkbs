@@ -181,6 +181,7 @@ async def main():
         filename = msg.headers.get("filename")
         command = msg.headers.get("command")
         path = msg.headers.get("path", os.getenv("WEBDAV_PATH", "pkebs"))
+        path_fixed = msg.headers.get("path-fixed")
         upload = msg.headers.get("upload", os.getenv("WEBDAV_UPLOAD", "zip"))
         
         if not(jobid):
@@ -234,6 +235,7 @@ async def main():
         if filename and "zip" == upload:
             zipname = os.path.join(os.path.dirname(sandbox), f"{jobid}.zip")
             zip_dir(zipname, sandbox)
+            # FIXME path_fixed
             status = webdav_upload(url, user, passwd, path, zipname)
             mylog(f"Upload: server {url} user {user} path {path} file {zipname} success={status}")
             # FIXME cleanup
@@ -248,6 +250,7 @@ async def main():
                 for fname in files:
                     xfile = os.path.join(path, jobid, os.path.join(root, fname)[1+len(sandbox):])
                     mylog(f"upload {xfile}")
+                    # FIXME path_fixed
                     webdav_upload(url, user, passwd, os.path.dirname(xfile), os.path.join(root, fname))
         else:
             mylog("The build-in upload is skipped")
