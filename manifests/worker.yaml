@@ -28,4 +28,6 @@ spec:
         envFrom:
         - configMapRef:
             name: env-config
-
+        resources:
+          limits:
+            cpu: "1000m"

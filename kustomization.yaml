@@ -6,6 +6,7 @@ resources:
 - manifests/nats.yaml
 - manifests/dispatcher.yaml
 - manifests/worker.yaml
+- manifests/autoscaler.yaml
 - manifests/ingress.yaml
 images:
 - name: WORKER_IMAGE
