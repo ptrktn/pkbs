@@ -4,6 +4,7 @@ NS=${PKEBS_NS:-pkebs}
 
 opt_N=""
 opt_p=""
+opt_P=""
 opt_u=""
 opt_c=""
 
@@ -28,6 +29,7 @@ submit_job() {
 
 	[ -z "$opt_N" ] || options="-N $opt_N"
 	[ -z "$opt_p" ] || options="$options -p $opt_p"
+	[ -z "$opt_P" ] || options="$options -P $opt_P"
 	[ -z "$opt_u" ] || options="$options -u $opt_u"
 	[ -z "$opt_c" ] || options="$options -c $opt_c"
 
@@ -68,6 +70,9 @@ while getopts "hN:p:u:" opt; do
             ;;
         p)
             opt_p=$(echo $OPTARG | sed -e 's:[^A-Za-z0-9._/\-]::g' -e 's:^/::' -e 's:/$::')
+            ;;
+        P)
+            opt_P=$(echo $OPTARG | sed -e 's:[^A-Za-z0-9._/\-]::g' -e 's:^/::' -e 's:/$::')
             ;;
         u)
             opt_u=$(echo $OPTARG | sed -e 's:[^A-Za-z0-9._/\-]::g')
