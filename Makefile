@@ -100,4 +100,11 @@ xreload:
 reconfigure-registry:
 	kustomize edit set image WORKER_IMAGE=$(REGISTRY)/pkebs-worker:latest
 
+.PHONY: configure-k3s-agent
+configure-k3s-agent:
+	test "" != "$(AGENT_NODE)"
+	timeout 30s ssh -l root $(AGENT_NODE) /bin/true || (test "" != "$(SSHPASS)" && sshpass -v -e ssh-copy-id -l root $(AGENT_NODE))
+	scp -q misc/configure-k3s-alpine-agent.sh root@$(AGENT_NODE):
+	ssh -l root $(AGENT_NODE) "K3S_TOKEN='`sudo cat /var/lib/rancher/k3s/server/node-token`' K3S_URL=https://`hostname -I | awk '{print $$1}'`:6443 sh ./configure-k3s-alpine-agent.sh"
 
+#	ssh -l root $(AGENT_NODE) "curl -sfL https://get.k3s.io | K3S_TOKEN='`sudo cat /var/lib/rancher/k3s/server/node-token`' K3S_URL=https://`hostname -I | awk '{print $$1}'`:6443 sh -s - agent"
