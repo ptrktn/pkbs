@@ -266,13 +266,15 @@ async def main():
         ji = await jobinfo(jobid)
         t1 = time.time()
         ji["started"] = t1
+        ji["status"] = "running"
+        ji["node"] = os.getenv("HOSTNAME", "UNDEFINED")
         await jobinfo(jobid, ji)
         status = os.system(f"{pbsenv} && {command}")
         t2 = time.time()
         wallclock = round(t2 - t1, 2)
+        ji["exit_code"] = status >> 8
         ji["finished"] = t2
         ji["status"] = "finished"
-        ji["exit_code"] = status
         ji["wallclock"] = wallclock
         await jobinfo(jobid, ji)
         mylog(f"Job {jobid} exited with status {status} and the elapsed wallclock time was {wallclock} seconds")

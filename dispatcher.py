@@ -26,26 +26,10 @@ import nanoid
 from nats.errors import TimeoutError
 import json
 
+
 def mylog(message):
     print(f"{time.strftime('%Y-%m-%dT%H:%M:%S', time.localtime())} {message}")
     sys.stdout.flush()
-
-
-async def kvx(queue, jobid, x, get=True):
-    nc = await nats.connect("nats://127.0.0.1:14222")
-    js = nc.jetstream()
-
-    # Create a KV
-    kv = await js.create_key_value(bucket='MY_KV')
-    await js.add_stream(name="mystream")
-
-    if get:
-        res = await kv.get(f'{jobid}@{queue}')
-        # Set and retrieve a value
-    else:
-        res = await kv.put(f'{jobid}@{queue}', x.encode())
-    await nc.close()
-    return res
 
 
 async def main(argv):
@@ -68,7 +52,15 @@ async def main(argv):
     async def reconnected_cb():
         mylog(f"Connected to NATS at {nc.connected_url.netloc}...")
 
-    jobid = f"{args.name}-{nanoid.generate()}"
+    def newjobid():
+        custom = (
+            "1234567890"
+            "abcdefghijklmnopqrstuvwxyz"
+            "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+        )
+        return nanoid.generate(custom, 11)
+
+    jobid = f"{newjobid()}"
 
     options = {
         "error_cb": error_cb,
@@ -128,7 +120,7 @@ async def main(argv):
         "queued": time.time(),
         "started": None,
         "finished": None,
-        "uploaded": None,
+        "name": args.name,
         "status": "queued",
         "node": None,
         "exit_code": None,

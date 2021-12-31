@@ -20,6 +20,7 @@ import argparse
 import sys
 import os
 import time
+from datetime import timedelta
 import asyncio
 import nats
 from nats.errors import TimeoutError
@@ -123,9 +124,8 @@ async def main():
             msg = await sub.next_msg()
             jobid = msg.headers["jobid"]
             jobs.append(jobid)
-            #print(jobid, x)
         except nats.errors.TimeoutError:
-            print("Reached apparent end of stream")
+            # Reached apparent end of stream
             break
         except Exception as e:
             print(e)
@@ -133,13 +133,33 @@ async def main():
     kv = await js.create_key_value(bucket="qstat")
     for jobid in jobs:
         v = await kv.get(f"{jobid}@{args.queue}")
-        doc = json.loads(v.value.decode("utf-8"))
-        doc["name"] = "FIXME"
-        print(
-            f"{jobid} {doc['name']} {doc['node']} {doc['status']}"
-        )
+        ji = json.loads(v.value.decode("utf-8"))
         if args.verbose:
-            print(doc)
+            print(json.dumps(ji, indent=4))
+        else:
+            out = []
+            out.append(f"{jobid[:11]:<11}")
+            out.append(f"{ji['name'][:22]:<22}")
+
+            if not(ji["node"]):
+                ji["node"] = "N/A"
+            out.append(f"{ji['node'][:18]:<18}")
+
+            out.append(f"{ji['status'][:10]:<10}")
+
+            if ji["wallclock"]:
+                out.append(f"{str(timedelta(seconds=int(ji['wallclock']))):<11}")
+            elif ji["started"]:
+                out.append(f"{str(timedelta(seconds=int(time.time() - ji['started']))):<11}")
+            else:
+                x = "--:--:--"
+                out.append(f"{x:<11}")
+
+            if None == ji["exit_code"]:
+                ji["exit_code"] = "N/A"
+            out.append(f"{ji['exit_code']:<3}")
+
+            print(" ".join(out))
 
     await nc.close()
 
