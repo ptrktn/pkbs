@@ -30,6 +30,8 @@ from typing import Union
 import hashlib
 import requests
 import json
+import nanoid
+
 
 cfg = {
     "syslog": False
@@ -184,10 +186,16 @@ async def main():
             v = await kv.get(f"{jobid}@{args.queue}")
             return json.loads(v.value.decode("utf-8"))
 
+    def tempname():
+        return os.path.join(
+            "/tmp",
+            nanoid.generate("1234567890abcdefghijklmnopqrstuvwxyz", 10)
+        )
+
     async def qsub(msg):
         mylog(f"QSUB {msg.subject} {msg.headers} LEN {len(msg.data)}")
         jobid = msg.headers["jobid"]
-        name = msg.headers.get("name", "qsub")
+        name = msg.headers.get("name", "")
         filename = msg.headers.get("filename")
         command = msg.headers.get("command")
         path = msg.headers.get("path", os.getenv("WEBDAV_PATH", "pkebs"))
@@ -198,9 +206,30 @@ async def main():
             mylog("Jobs without jobid item in header will not be processed")
             return
 
+        sandbox = os.path.join("/var", "tmp", "pkebs", jobid)
+        tmpdir = tempname()
+        nodefile = tempname()
+
+        with open(nodefile, "w") as fp:
+            fp.write(f"{os.getenv('HOSTNAME')}\n")
+
+        # FIXME try
+        os.makedirs(tmpdir)
+
+        pbsenv = (
+            " NCPU=1"
+            " PBS_ENVIRONMENT=BATCH"
+            f" PBS_JOBDIR={sandbox}"
+            f" PBS_JOBID={jobid}"
+            f" PBS_JOBNAME={name}"
+            f" PBS_NODEFILE={nodefile}"
+            f" PBS_NODENUM=0"
+            f" PBS_QUEUE={args.queue}"
+            f" TMPDIR={tmpdir}"
+        )
+
         if filename:
             # FIXME clean sandbox
-            sandbox = os.path.join("/var", "tmp", "pkebs", jobid)
             ofile = "stdout.txt"
             efile = "stderr.txt"
             os.makedirs(sandbox)
@@ -237,7 +266,7 @@ async def main():
         t1 = time.time()
         ji["started"] = t1
         await jobinfo(jobid, ji)
-        status = os.system(command)
+        status = os.system(f"{pbsenv} {command}")
         t2 = time.time()
         wallclock = round(t2 - t1, 2)
         ji["finished"] = t2
@@ -247,7 +276,6 @@ async def main():
         await jobinfo(jobid, ji)
         mylog(f"Job {jobid} exited with status {status} and the elapsed wallclock time was {wallclock} seconds")
 
-        # FIXME zip, files, none
         user = os.getenv("WEBDAV_USER", "admin")
         passwd = os.getenv("WEBDAV_PASSWD", "admin")
         url = os.getenv("WEBDAV_URL", "http://nextcloud-svc/remote.php/dav/files")
@@ -275,6 +303,12 @@ async def main():
         else:
             mylog("The build-in upload is skipped")
         mylog(f"Processing {jobid} is completed")
+
+        if os.path.isfile(nodefile):
+            os.unlink(nodefile)
+
+        if os.path.isdir(tmpdir):
+            os.system(f"rm -fr {tmpdir}")
 
     # Create a pull-based consumer
     sub = await js.pull_subscribe(args.queue, consumer, stream=sname)
