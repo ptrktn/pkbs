@@ -8,11 +8,14 @@ preflight() {
 }
 
 run() {
-	./ersimu/ersimu.py --name revival --verbose --run --plot all ${PARAM_FILE}
+	chmod u+x ersimu/ersimu.py
+	cp $PARAM_FILE ./input.txt
+	time ./ersimu/ersimu.py --verbose --run --plot H2Q input.txt 2>&1
+	ls -lh
 }
 
 postflight() {
-	rm -fr ersimu simulation.dat simulation
+	rm -fr ersimu *.dat simulation
 }
 
 preflight
