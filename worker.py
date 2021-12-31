@@ -217,6 +217,7 @@ async def main():
         os.makedirs(tmpdir)
 
         pbsenv = (
+            "export"
             " NCPU=1"
             " PBS_ENVIRONMENT=BATCH"
             f" PBS_JOBDIR={sandbox}"
@@ -266,7 +267,7 @@ async def main():
         t1 = time.time()
         ji["started"] = t1
         await jobinfo(jobid, ji)
-        status = os.system(f"{pbsenv} {command}")
+        status = os.system(f"{pbsenv} && {command}")
         t2 = time.time()
         wallclock = round(t2 - t1, 2)
         ji["finished"] = t2
