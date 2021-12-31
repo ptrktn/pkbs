@@ -176,13 +176,12 @@ async def main():
     await js.add_stream(name=sname, subjects=[args.queue])
     kv = await js.create_key_value(bucket="qstat")
 
-    async def kvdoc(jobid, get=True, dictkey=None, dictval=None):
-        v = await kv.get(f"{jobid}@{args.queue}")
-        doc = json.loads(v.value.decode("utf-8"))
-        if get:
-            return doc
-        doc[dictkey] = dictval
-        await kv.put(f'{jobid}@{args.queue}', json.dumps(doc).encode("utf-8"))
+    async def jobinfo(jobid, doc=None):
+        if doc:
+            await kv.put(f'{jobid}@{args.queue}', json.dumps(doc).encode("utf-8"))
+        else:
+            v = await kv.get(f"{jobid}@{args.queue}")
+            return json.loads(v.value.decode("utf-8"))
 
     async def qsub(msg):
         mylog(f"QSUB {msg.subject} {msg.headers} LEN {len(msg.data)}")
@@ -231,15 +230,20 @@ async def main():
         else:
             command = msg.data.decode("utf-8")
 
+        ji = await jobinfo(jobid)
         mylog(f"Job {jobid} command is: {command}")
+        ji = await jobinfo(jobid)
         t1 = time.time()
-        await kvdoc(jobid, False, "started", t1)
+        ji["started"] = t1
+        await jobinfo(jobid, ji)
         status = os.system(command)
         t2 = time.time()
         wallclock = round(t2 - t1, 2)
-        await kvdoc(jobid, False, "finished", t2)
-        await kvdoc(jobid, False, "status", status)
-        await kvdoc(jobid, False, "wallclock", wallclock)
+        ji["finished"] = t2
+        ji["status"] = "finished"
+        ji["exit_code"] = status
+        ji["wallclock"] = wallclock
+        await jobinfo(jobid, ji)
         mylog(f"Job {jobid} exited with status {status} and the elapsed wallclock time was {wallclock} seconds")
 
         # FIXME zip, files, none
