@@ -25,8 +25,8 @@ nats:
 
 .PHONY: start-nats
 start-nats: $(NATS_SERVER)
-	nc -zv localhost 14222 > /dev/null 2>&1 || (screen -S nats -d -m $(NATS_SERVER) -p 14222 -js && sleep 5)
-	nc -zv localhost 14222
+	([ -z "`pgrep -u $$LOGNAME nats-server`" ] && (screen -S nats -d -m $(NATS_SERVER) -p 14222 -js && sleep 5)) || /bin/true
+	./nats -s nats://127.0.0.1:14222 account info
 
 .PHONY: stop-nats
 stop-nats: $(NATS_SERVER)
