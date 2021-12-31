@@ -107,3 +107,10 @@ configure-k3s-agent:
 	timeout 30s ssh -l root $(AGENT_NODE) /bin/true || (test "" != "$(SSHPASS)" && sshpass -v -e ssh-copy-id -l root $(AGENT_NODE))
 	scp -q misc/configure-k3s-alpine-agent.sh root@$(AGENT_NODE):
 	ssh -l root $(AGENT_NODE) "K3S_TOKEN='`sudo cat /var/lib/rancher/k3s/server/node-token`' K3S_URL=https://`hostname -I | awk '{print $$1}'`:6443 sh ./configure-k3s-alpine-agent.sh"
+
+.PHONY: test
+test: $(NATS_SERVER)
+	$(MAKE) start-nats
+	./dispatcher.py -s nats://localhost:14222  -c "sleep 1"
+	./worker.py -s nats://localhost:14222 --max-jobs 1
+	./qstat.py -s nats://localhost:14222

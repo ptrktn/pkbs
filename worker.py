@@ -129,6 +129,7 @@ def mylog(message):
 async def main():
     parser = argparse.ArgumentParser()
     parser.add_argument('--creds', default="")
+    parser.add_argument('--max-jobs', default=None)
     parser.add_argument('-q', '--queue', default="jobs")
     parser.add_argument('-s', '--servers', default="nats")
     parser.add_argument("--syslog", action="store_true", dest="syslog", default=False)
@@ -277,7 +278,7 @@ async def main():
 
     # Create a pull-based consumer
     sub = await js.pull_subscribe(args.queue, consumer, stream=sname)
-
+    jobs = 0
     while True:
         try:
             msgs = await sub.fetch(1, 10)
@@ -292,7 +293,12 @@ async def main():
             info = await js.consumer_info(sname, consumer)
             mylog(f"There are {info.num_pending} pending request(s)")
             await qsub(msg)
-        
+            jobs += 1
+        mylog(f"Number of processed jobs is {jobs} {int(args.max_jobs)}")
+        if args.max_jobs and jobs == int(args.max_jobs):
+            # FIXME clean exit
+            sys.exit(0)
+
 
 if __name__ == '__main__':
     loop = asyncio.get_event_loop()
