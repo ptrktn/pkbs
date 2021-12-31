@@ -23,6 +23,24 @@ import time
 import asyncio
 import nats
 from nats.errors import TimeoutError
+import json
+
+
+async def kvx(queue, jobid, x, get=True):
+    nc = await nats.connect("nats://127.0.0.1:14222")
+    js = nc.jetstream()
+
+    # Create a KV
+    kv = await js.create_key_value(bucket='MY_KV')
+    await js.add_stream(name="mystream")
+
+    if get:
+        res = await kv.get(f'{jobid}@{queue}')
+        # Set and retrieve a value
+    else:
+        res = await kv.put(f'{jobid}@{queue}', x.encode())
+    await nc.close()
+    return res
 
 
 def mylog(message):
@@ -87,7 +105,44 @@ async def main():
         print(s)
         print(c)
     print(f"{s.config.name} messages {s.state.messages} pending {c.num_pending}")
-    await nc.close()        
+
+    # Replay messages in queue
+    await js.add_stream(name=sname, subjects=[args.queue])
+
+    cinfo = await js.add_consumer(
+        sname,
+        durable_name="qstat",
+        deliver_policy=nats.js.api.DeliverPolicy.all,
+        filter_subject=args.queue
+    )
+
+    jobs = []
+    sub = await js.subscribe(args.queue, stream=sname)
+    while True:
+        try:
+            msg = await sub.next_msg()
+            jobid = msg.headers["jobid"]
+            jobs.append(jobid)
+            #print(jobid, x)
+        except nats.errors.TimeoutError:
+            print("Reached apparent end of stream")
+            break
+        except Exception as e:
+            print(e)
+
+    kv = await js.create_key_value(bucket="qstat")
+    for jobid in jobs:
+        v = await kv.get(f"{jobid}@{args.queue}")
+        doc = json.loads(v.value.decode("utf-8"))
+        doc["name"] = "FIXME"
+        print(
+            f"{jobid} {doc['name']} {doc['node']} {doc['status']}"
+        )
+        if args.verbose:
+            print(doc)
+
+    await nc.close()
+
 
 if __name__ == '__main__':
     asyncio.run(main())

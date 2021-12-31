@@ -29,6 +29,7 @@ from pathlib import Path
 from typing import Union
 import hashlib
 import requests
+import json
 
 cfg = {
     "syslog": False
@@ -173,8 +174,17 @@ async def main():
 
     # Persist messages on jobs' queue (i.e, subject in Jetstream).
     await js.add_stream(name=sname, subjects=[args.queue])
+    kv = await js.create_key_value(bucket="qstat")
 
-    def qsub(msg):
+    async def kvdoc(jobid, get=True, dictkey=None, dictval=None):
+        v = await kv.get(f"{jobid}@{args.queue}")
+        doc = json.loads(v.value.decode("utf-8"))
+        if get:
+            return doc
+        doc[dictkey] = dictval
+        await kv.put(f'{jobid}@{args.queue}', json.dumps(doc).encode("utf-8"))
+
+    async def qsub(msg):
         mylog(f"QSUB {msg.subject} {msg.headers} LEN {len(msg.data)}")
         jobid = msg.headers["jobid"]
         name = msg.headers.get("name", "qsub")
@@ -223,9 +233,14 @@ async def main():
 
         mylog(f"Job {jobid} command is: {command}")
         t1 = time.time()
+        await kvdoc(jobid, False, "started", t1)
         status = os.system(command)
         t2 = time.time()
-        mylog(f"Job {jobid} exited with status {status} and the elapsed wallclock time was {round(t2 - t1, 2)} seconds")
+        wallclock = round(t2 - t1, 2)
+        await kvdoc(jobid, False, "finished", t2)
+        await kvdoc(jobid, False, "status", status)
+        await kvdoc(jobid, False, "wallclock", wallclock)
+        mylog(f"Job {jobid} exited with status {status} and the elapsed wallclock time was {wallclock} seconds")
 
         # FIXME zip, files, none
         user = os.getenv("WEBDAV_USER", "admin")
@@ -272,7 +287,7 @@ async def main():
             await msg.ack()
             info = await js.consumer_info(sname, consumer)
             mylog(f"There are {info.num_pending} pending request(s)")
-            qsub(msg)
+            await qsub(msg)
         
 
 if __name__ == '__main__':

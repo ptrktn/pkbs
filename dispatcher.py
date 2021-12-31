@@ -24,11 +24,28 @@ import asyncio
 import nats
 import nanoid
 from nats.errors import TimeoutError
-
+import json
 
 def mylog(message):
     print(f"{time.strftime('%Y-%m-%dT%H:%M:%S', time.localtime())} {message}")
     sys.stdout.flush()
+
+
+async def kvx(queue, jobid, x, get=True):
+    nc = await nats.connect("nats://127.0.0.1:14222")
+    js = nc.jetstream()
+
+    # Create a KV
+    kv = await js.create_key_value(bucket='MY_KV')
+    await js.add_stream(name="mystream")
+
+    if get:
+        res = await kv.get(f'{jobid}@{queue}')
+        # Set and retrieve a value
+    else:
+        res = await kv.put(f'{jobid}@{queue}', x.encode())
+    await nc.close()
+    return res
 
 
 async def main(argv):
@@ -100,10 +117,25 @@ async def main(argv):
         
     # Create JetStream context.
     js = nc.jetstream()
-
+    # kv = await js.create_key_value(bucket='qstat')
     # Persist messages on jobs' queue (i.e, subject in Jetstream).
     await js.add_stream(name=f"{args.queue}-stream", subjects=[args.queue])
     ack = await js.publish(args.queue, data, headers=headers)
+
+    # Create a KV
+    kv = await js.create_key_value(bucket="qstat")
+    doc = {
+        "queued": time.time(),
+        "started": None,
+        "finished": None,
+        "uploaded": None,
+        "status": "queued",
+        "node": None,
+        "exit_code": None,
+        "wallclock": None
+    }
+    await kv.put(f'{jobid}@{args.queue}', json.dumps(doc).encode('utf-8'))
+
     await nc.close()
 
     print(jobid)
