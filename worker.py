@@ -331,9 +331,10 @@ async def main():
             mylog(f"There are {info.num_pending} pending request(s)")
             await qsub(msg)
             jobs += 1
-        mylog(f"Number of processed jobs is {jobs} {int(args.max_jobs)}")
+        mylog(f"Number of processed jobs is {jobs}")
         if args.max_jobs and jobs == int(args.max_jobs):
             # FIXME clean exit
+            mylog("Maximum number of jobs reached ({int(args.max_jobs)})")
             sys.exit(0)
 
 
