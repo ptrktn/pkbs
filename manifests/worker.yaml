@@ -1,9 +1,9 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: worker-dep
+  name: worker
 spec:
-  replicas: 2
+  replicas: 1
   selector:
     matchLabels:
       app: worker
@@ -30,4 +30,4 @@ spec:
             name: env-config
         resources:
           limits:
-            cpu: "1000m"
+            cpu: "900m"
