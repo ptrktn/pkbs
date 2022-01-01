@@ -139,13 +139,13 @@ async def main():
         else:
             out = []
             out.append(f"{jobid[:11]:<11}")
-            out.append(f"{ji['name'][:22]:<22}")
+            out.append(f"{ji['name'][:16]:<16}")
 
             if not(ji["node"]):
                 ji["node"] = "N/A"
-            out.append(f"{ji['node'][:18]:<18}")
+            out.append(f"{ji['node'][:26]:<26}")
 
-            out.append(f"{ji['status'][:10]:<10}")
+            out.append(f"{ji['status'][:8]:<8}")
 
             if ji["wallclock"]:
                 out.append(f"{str(timedelta(seconds=int(ji['wallclock']))):<11}")
