@@ -1,1 +1,1 @@
-# pkebs - Portable Kubernetes Engine Batch System
+# pkebs - Personal Kubernetes Engine Batch System
