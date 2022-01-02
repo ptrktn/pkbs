@@ -1,0 +1,31 @@
+---
+apiVersion: v1
+kind: Pod
+metadata:
+  name: rsyslog
+  labels:
+    app: rsyslog
+spec:
+  containers:
+    - name: rsyslog
+      image: rsyslog/syslog_appliance_alpine
+      imagePullPolicy: IfNotPresent
+      envFrom:
+      - configMapRef:
+          name: rsyslog-config
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: rsyslog
+  labels:
+    app: rsyslog
+spec:
+  ports:
+  - port: 514
+    targetPort: 514
+    protocol: UDP
+    name: rsyslog
+  clusterIP: None
+  selector:
+    app: rsyslog

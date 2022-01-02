@@ -41,12 +41,16 @@ namespace:
 	kubectl create ns $(NS) 2> /dev/null || true
 	kubectl get ns $(NS)
 
-.PHONY: configmap
-configmap:
+rsyslog-config: rsyslog.conf
+	echo "RSYSLOG_CONFIG_BASE64=`base64 -w 0 < rsyslog.conf`" >> $@
+
+.PHONY: configmaps
+configmaps: rsyslog-config
 	kubectl create configmap env-config --from-env-file=env-config --dry-run=client -o yaml | kubectl -n $(NS) apply -f -
+	kubectl create configmap rsyslog-config --from-env-file=rsyslog-config --dry-run=client -o yaml | kubectl -n $(NS) apply -f -
 
 .PHONY: deploy
-deploy: namespace configmap
+deploy: namespace configmaps
 	kustomize build . > /dev/null
 	kustomize build . | kubectl -n $(NS) apply -f -
 

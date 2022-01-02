@@ -90,6 +90,8 @@ spec:
          - "--config"
          - "/etc/nats-config/nats.conf"
          - "--jetstream"
+         - "--remote_syslog"
+         - "udp://localhost:514"
          # - "--auth"
          # - "secret"
 
