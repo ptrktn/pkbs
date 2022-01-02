@@ -2,11 +2,11 @@
 
 NS=${PKEBS_NS:-pkebs}
 
+opt_c=""
 opt_N=""
 opt_p=""
 opt_P=""
 opt_u=""
-opt_c=""
 
 errr() {
 	local message=$1
@@ -16,8 +16,9 @@ errr() {
 }
 
 usage() {
-	echo "Usage: qsub PAYLOAD"
-	# FIXME Options
+	echo "Usage: qsub [options] PAYLOAD"
+	echo "Options are as follows"
+	echo "    -n    specify namespace"
 	exit 1
 }
 
@@ -60,13 +61,16 @@ qsub() {
 	submit_job $dst $dst
 }
 
-while getopts "hN:p:u:" opt; do
+while getopts "hN:n:p:u:" opt; do
     case $opt in
         h)
             usage
             ;;
         N)
             opt_N=$(echo $OPTARG | sed -e 's:[^A-Za-z0-9._\-]::g')
+            ;;
+		n)
+            NS=$(echo $OPTARG | sed -e 's:[^A-Za-z0-9._\-]::g')
             ;;
         p)
             opt_p=$(echo $OPTARG | sed -e 's:[^A-Za-z0-9._/\-]::g' -e 's:^/::' -e 's:/$::')
