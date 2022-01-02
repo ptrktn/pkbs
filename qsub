@@ -16,9 +16,15 @@ errr() {
 }
 
 usage() {
-	echo "Usage: qsub [options] PAYLOAD"
+	echo "Usage: qsub [OPTIONS] [PAYLOAD]"
+	echo "If payload is not given, commands are read from the standard input."
 	echo "Options are as follows"
+	echo "    -h    show help"
+	echo "    -N    name the job"
 	echo "    -n    specify namespace"
+	echo "    -p    upload path prefix"
+	# FIXME echo "    -P    fixed upload path"
+	echo "    -u    what to upload, one of files, zip or none"
 	exit 1
 }
 
@@ -38,7 +44,7 @@ submit_job() {
 	[ 1000000 -lt $bytes ] && errr "File $src is too large: $bytes bytes"
 
 	kubectl -n $NS cp $src dispatcher:${dst} || errr "File transfer failed"
-	kubectl -n $NS exec -it dispatcher -- /usr/src/app/dispatcher.py $options $dst || errr "Dispatch failed"
+	kubectl -n $NS exec dispatcher -- /usr/src/app/dispatcher.py $options $dst || errr "Dispatch failed"
 	unlink $src
 }
 
@@ -90,8 +96,16 @@ done
 
 shift $((OPTIND-1))
 
-[ 1 -ne $# ] && usage
-
-qsub "$1"
+if [ 0 -ne $# ] ; then
+	qsub "$1"
+else
+	# read input from stdin
+	tmp=$(mktemp -t stdin.XXXXXXX)
+	chmod u+x $tmp
+	cat <&0 > $tmp
+	opt_N="STDIN"
+	qsub $tmp
+	unlink $tmp
+fi
 
 exit $?
