@@ -1,41 +1,13 @@
 MODULE      = pkebs
 NS          = $(MODULE)
 SNS         = $(MODULE)-services
-NATS_SERVER = $(HOME)/.local/bin/nats-server
-NATS_CLIENT = $(HOME)/.local/bin/nats
 REGISTRY    = registry.localdomain
 XREGISTRY   = $(REGISTRY):5000
 
+# FIXME default rule
 .PHONY: install
-install: $(NATS_SERVER) $(NATS_CLIENT)
-
-$(NATS_SERVER):
-	install -m 755 -d $(dir $@)
-	test -f nats-server.zip || curl -sL https://github.com/nats-io/nats-server/releases/download/v2.6.5/nats-server-v2.6.5-linux-amd64.zip -o nats-server.zip
-	unzip -j nats-server.zip "*/nats-server"
-	install nats-server $@
-	unlink nats-server
-
-$(NATS_CLIENT): nats
-	install -m 755 -d $(dir $@)
-	install nats $@
-
-nats:
-	test -f nats-client.zip || curl -sL https://github.com/nats-io/natscli/releases/download/v0.0.28/nats-0.0.28-linux-amd64.zip -o nats-client.zip
-	unzip -j nats-client.zip "*/nats"
-
-.PHONY: start-nats
-start-nats: $(NATS_SERVER)
-	([ -z "`pgrep -u $$LOGNAME nats-server`" ] && (screen -S nats -d -m $(NATS_SERVER) -p 14222 -js && sleep 5)) || /bin/true
-	./nats -s nats://127.0.0.1:14222 account info
-
-.PHONY: stop-nats
-stop-nats: $(NATS_SERVER)
-	( [ ! -z "`pgrep -u $$LOGNAME nats-server`" ] && kill `pgrep -u $$LOGNAME nats-server` ) || /bin/true
-
-.PHONY: xdeps
-xdeps:
-	sudo apt-get install -y netcat screen
+install:
+	/bin/false
 
 rsyslog-config: rsyslog.conf
 	echo "RSYSLOG_CONFIG_BASE64=`base64 -w 0 < rsyslog.conf`" >> $@
@@ -120,8 +92,30 @@ configure-k3s-agent:
 	scp -q misc/configure-k3s-alpine-agent.sh root@$(AGENT_NODE):
 	ssh -l root $(AGENT_NODE) "K3S_TOKEN='`sudo cat /var/lib/rancher/k3s/server/node-token`' K3S_URL=https://`hostname -I | awk '{print $$1}'`:6443 sh ./configure-k3s-alpine-agent.sh"
 
+nats-server:
+	install -m 755 -d $(dir $@)
+	test -f nats-server.zip || curl -sL https://github.com/nats-io/nats-server/releases/download/v2.6.5/nats-server-v2.6.5-linux-amd64.zip -o nats-server.zip
+	unzip -j nats-server.zip "*/nats-server"
+
+nats:
+	test -f nats-client.zip || curl -sL https://github.com/nats-io/natscli/releases/download/v0.0.28/nats-0.0.28-linux-amd64.zip -o nats-client.zip
+	unzip -j nats-client.zip "*/nats"
+
+.PHONY: start-nats
+start-nats: $(NATS_SERVER)
+	([ -z "`pgrep -u $$LOGNAME nats-server`" ] && (screen -S nats -d -m ./nats-server -p 14222 -js && sleep 5)) || /bin/true
+	./nats -s nats://127.0.0.1:14222 account info
+
+.PHONY: stop-nats
+stop-nats: $(NATS_SERVER)
+	( [ ! -z "`pgrep -u $$LOGNAME nats-server`" ] && kill `pgrep -u $$LOGNAME nats-server` ) || /bin/true
+
+.PHONY: xdeps
+xdeps:
+	sudo apt-get install -y netcat screen
+
 .PHONY: test
-test: $(NATS_SERVER)
+test: nats-server nats
 	$(MAKE) start-nats
 	./dispatcher.py -s nats://localhost:14222  -c "sleep 1"
 	./worker.py -s nats://localhost:14222 --max-jobs 1
