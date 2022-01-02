@@ -109,12 +109,8 @@ async def main(argv):
         
     # Create JetStream context.
     js = nc.jetstream()
-    # kv = await js.create_key_value(bucket='qstat')
-    # Persist messages on jobs' queue (i.e, subject in Jetstream).
-    await js.add_stream(name=f"{args.queue}-stream", subjects=[args.queue])
-    ack = await js.publish(args.queue, data, headers=headers)
 
-    # Create a KV
+    # Record the job in key-value store
     kv = await js.create_key_value(bucket="qstat")
     doc = {
         "queued": time.time(),
@@ -127,6 +123,10 @@ async def main(argv):
         "wallclock": None
     }
     await kv.put(f'{jobid}@{args.queue}', json.dumps(doc).encode('utf-8'))
+
+    # Publish message to the jobs queue (i.e, subject in Jetstream)
+    await js.add_stream(name=f"{args.queue}-stream", subjects=[args.queue])
+    ack = await js.publish(args.queue, data, headers=headers)
 
     await nc.close()
 
