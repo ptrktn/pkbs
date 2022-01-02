@@ -1,4 +1,4 @@
-WEBDAV_URL=http://nextcloud-svc/remote.php/dav/files
+WEBDAV_URL=http://nextcloud-svc.pkebs-services/remote.php/dav/files
 WEBDAV_USER=admin
 WEBDAV_PASSWD=admin
 WEBDAV_PATH=pkebs

@@ -1,5 +1,6 @@
 MODULE      = pkebs
 NS          = $(MODULE)
+SNS         = $(MODULE)-services
 NATS_SERVER = $(HOME)/.local/bin/nats-server
 NATS_CLIENT = $(HOME)/.local/bin/nats
 REGISTRY    = registry.localdomain
@@ -36,11 +37,6 @@ stop-nats: $(NATS_SERVER)
 xdeps:
 	sudo apt-get install -y netcat screen
 
-.PHONY: namespace
-namespace:
-	kubectl create ns $(NS) 2> /dev/null || true
-	kubectl get ns $(NS)
-
 rsyslog-config: rsyslog.conf
 	echo "RSYSLOG_CONFIG_BASE64=`base64 -w 0 < rsyslog.conf`" >> $@
 
@@ -48,6 +44,18 @@ rsyslog-config: rsyslog.conf
 configmaps: rsyslog-config
 	kubectl create configmap env-config --from-env-file=env-config --dry-run=client -o yaml | kubectl -n $(NS) apply -f -
 	kubectl create configmap rsyslog-config --from-env-file=rsyslog-config --dry-run=client -o yaml | kubectl -n $(NS) apply -f -
+
+.PHONY: deploy-services
+deploy-services: rsyslog-config
+	kubectl create ns $(SNS) 2> /dev/null || true
+	kubectl get ns $(SNS)
+	kubectl create configmap env-config --from-env-file=env-config --dry-run=client -o yaml | kubectl -n $(SNS) apply -f -
+	kubectl -n $(SNS) apply -f manifests/nextcloud.yaml
+	kubectl -n $(SNS) apply -f manifests/ingress.yaml
+
+.PHONY: namespace
+namespace:
+	kubectl get ns $(NS) 2> /dev/null || kubectl create ns $(NS)
 
 .PHONY: deploy
 deploy: namespace configmaps
