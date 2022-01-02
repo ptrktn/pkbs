@@ -12,17 +12,18 @@ install:
 rsyslog-config: rsyslog.conf
 	echo "RSYSLOG_CONFIG_BASE64=`base64 -w 0 < rsyslog.conf`" >> $@
 
-.PHONY: configmaps
-configmaps: rsyslog-config
+.PHONY: env-configmap
+env-configmap: rsyslog-config
 	kubectl create configmap env-config --from-env-file=env-config --dry-run=client -o yaml | kubectl -n $(NS) apply -f -
-	kubectl create configmap rsyslog-config --from-env-file=rsyslog-config --dry-run=client -o yaml | kubectl -n $(NS) apply -f -
 
 .PHONY: deploy-services
 deploy-services: rsyslog-config
 	kubectl create ns $(SNS) 2> /dev/null || true
 	kubectl get ns $(SNS)
-	kubectl create configmap env-config --from-env-file=env-config --dry-run=client -o yaml | kubectl -n $(SNS) apply -f -
+	kubectl create configmap rsyslog-config --from-env-file=rsyslog-config --dry-run=client -o yaml | kubectl -n $(SNS) apply -f -
+	$(MAKE) NS=$(SNS) env-configmap
 	kubectl -n $(SNS) apply -f manifests/nextcloud.yaml
+	kubectl -n $(SNS) apply -f manifests/rsyslog.yaml
 	kubectl -n $(SNS) apply -f manifests/ingress.yaml
 
 .PHONY: namespace
@@ -30,7 +31,7 @@ namespace:
 	kubectl get ns $(NS) 2> /dev/null || kubectl create ns $(NS)
 
 .PHONY: deploy
-deploy: namespace configmaps
+deploy: namespace env-configmap
 	kustomize build . > /dev/null
 	kustomize build . | kubectl -n $(NS) apply -f -
 
