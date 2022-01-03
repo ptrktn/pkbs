@@ -1,5 +1,9 @@
 # pkebs - Personal Kubernetes Engine Batch System
 
+## About
+
+This software harnesses Kubernetes to run batch jobs.
+
 ## Getting Started
 
 ### Prerequisites
