@@ -14,8 +14,8 @@ This software harnesses Kubernetes to run batch jobs.
 
 ## Contributing
 
-All contributions welcome. Bug reports, suggestions and feature
-requests should be reported by creating a new
+All contributions are welcome. Bug reports, suggestions and feature
+requests can be reported by creating a new
 [issue](https://github.com/ptrktn/pkebs/issues). Code and
 documentation contributions should be provided by creating a [pull
 request](https://github.com/ptrktn/pkebs/pulls) (here is a good
@@ -24,7 +24,8 @@ request](https://github.com/ptrktn/pkebs/pulls) (here is a good
 ## License
 
 Distributed under the GNU General Public License version 3, refer to
-LICENSE for more information.
+the file [LICENSE](https://github.com/ptrktn/pkebs/blob/main/LICENSE)
+for more information.
 
 ## Acknowledgments
 
