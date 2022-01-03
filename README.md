@@ -10,8 +10,8 @@
 
 ## Contributing
 
-All contributions welcome. Bug reports, suggestions and feature
-requests should be reported by creating a new
+All contributions are welcome. Bug reports, suggestions and feature
+requests can be reported by creating a new
 [issue](https://github.com/ptrktn/pkebs/issues). Code and
 documentation contributions should be provided by creating a [pull
 request](https://github.com/ptrktn/pkebs/pulls) (here is a good
