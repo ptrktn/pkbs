@@ -20,7 +20,8 @@ request](https://github.com/ptrktn/pkebs/pulls) (here is a good
 ## License
 
 Distributed under the GNU General Public License version 3, refer to
-LICENSE for more information.
+the file [LICENSE](https://github.com/ptrktn/pkebs/blob/main/LICENSE)
+for more information.
 
 ## Acknowledgments
 
