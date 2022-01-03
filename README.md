@@ -8,6 +8,12 @@ This software harnesses Kubernetes to run batch jobs.
 
 ### Prerequisites
 
+* GNU/Linux workstation or server, virtual machine (VM) works fine.
+* [GNU Make](https://docs.docker.com/get-docker/).
+* [kubectl](https://kubernetes.io/docs/tasks/tools/).
+* [Docker](https://docs.docker.com/get-docker/).
+* Kubernetes cluster.
+
 ### Installation
 
 ### Submit a batch job
