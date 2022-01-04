@@ -26,6 +26,10 @@ deploy-system: rsyslog-config
 	kubectl -n $(SNS) apply -f manifests/rsyslog.yaml
 	kubectl -n $(SNS) apply -f manifests/ingress.yaml
 
+.PHONY: clean-system
+clean-system:
+	kubectl delete --ignore-not-found=true ns $(SNS)
+
 .PHONY: namespace
 namespace:
 	kubectl get ns $(NS) 2> /dev/null || kubectl create ns $(NS)

@@ -34,7 +34,10 @@ spec:
           # nextcloud-svc is required for pods
           # 10.* is required to access the service from local network
           - name: NEXTCLOUD_TRUSTED_DOMAINS
-            value: nextcloud-svc.pkebs-services 10.*
+            valueFrom:
+              configMapKeyRef:
+                name: env-config
+                key: NEXTCLOUD_TRUSTED_DOMAINS
           ports:
             - name: web
               containerPort: 80
