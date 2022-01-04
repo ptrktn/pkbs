@@ -17,7 +17,7 @@ spec:
 apiVersion: v1
 kind: Service
 metadata:
-  name: rsyslog
+  name: rsyslog-svc
   labels:
     app: rsyslog
 spec:

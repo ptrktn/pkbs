@@ -38,6 +38,13 @@ cfg = {
 }
 
 
+def mylog(message):
+    print(f"{time.strftime('%Y-%m-%dT%H:%M:%S', time.localtime())} {message}")
+    sys.stdout.flush()
+    if cfg["syslog"]:
+        os.system(f"logger '{message}'")
+
+
 # https://stackoverflow.com/a/3431838
 def md5sum(fname):
     hash_md5 = hashlib.md5()
@@ -71,10 +78,9 @@ def webdav_mkdir(url, user, passwd, path):
         pass
         # mylog (f"Folder {path} already exists")
     elif 409 == r.status_code:
-        mylog(f"Parent of folder {path} does not exists")
+        mylog(f"Parent of folder {path} does not exist")
     else:
-        pass
-        # mylog(f"{r}")
+        mylog(f"Unhandled status code: {r.status_code}")
 
 
 def webdav_mkdirp(url, user, passwd, path):
@@ -110,7 +116,7 @@ def webdav_upload(url, user, passwd, path, filename, mkdirs=True):
                 return True
             else:
                 mylog(f"File {filename} checksum mismatch: orig={m5d_orig} dest={md5_dest}")
-    mylog(f"File {filename} uploaded to server {url} user {user} path {path} failed")
+    mylog(f"File {filename} upload to server {url} user {user} path {path} failed")
     return False
 
 
@@ -123,19 +129,12 @@ def zip_dir(zip_name: str, source_dir: Union[str, os.PathLike]):
             zf.write(file, file.relative_to(src_path.parent))
 
 
-def mylog(message):
-    print(f"{time.strftime('%Y-%m-%dT%H:%M:%S', time.localtime())} {message}")
-    sys.stdout.flush()
-    if cfg["syslog"]:
-        os.system(f"logger '{message}'")
-
-
 async def main():
     parser = argparse.ArgumentParser()
     parser.add_argument('--creds', default="")
     parser.add_argument('--max-jobs', default=None)
     parser.add_argument('-q', '--queue', default="jobs")
-    parser.add_argument('-s', '--servers', default="nats")
+    parser.add_argument('-s', '--servers', default=os.getenv("NATS_SERVER", "nats-svc"))
     parser.add_argument("--syslog", action="store_true", dest="syslog", default=False)
     parser.add_argument('--token', default="")
     args, unknown = parser.parse_known_args()

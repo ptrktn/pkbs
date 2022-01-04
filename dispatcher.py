@@ -40,7 +40,7 @@ async def main(argv):
     parser.add_argument('-p', '--path', default=os.getenv("WEBDAV_PATH", "pkebs"))
     parser.add_argument('-P', '--path-fixed', default=None)
     parser.add_argument('-q', '--queue', default="jobs")
-    parser.add_argument('-s', '--servers', default="nats")
+    parser.add_argument('-s', '--servers', default=os.getenv("NATS_SERVER", "nats-svc"))
     parser.add_argument('-u', '--upload', default=os.getenv("WEBDAV_UPLOAD", "zip"), help="one of files, zip or none")
     parser.add_argument('--token', default="")
     parser.add_argument("file", metavar="FILE", type=str, nargs='?')

@@ -1,7 +1,7 @@
-WEBDAV_URL=http://nextcloud-svc.pkebs-services/remote.php/dav/files
+WEBDAV_URL=http://nextcloud-svc.pkebs-system/remote.php/dav/files
 WEBDAV_USER=admin
 WEBDAV_PASSWD=admin
 WEBDAV_PATH=pkebs
 WEBDAV_UPLOAD=files
 WEBDAV_UPLOAD_FILES_FROM_DIR=.
-RSYSLOG_SERVER=rsyslog.pkebs-services
+RSYSLOG_SERVER=rsyslog-svc.pkebs-system

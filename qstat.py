@@ -24,38 +24,22 @@ from datetime import timedelta
 import asyncio
 import nats
 from nats.errors import TimeoutError
+from nats.js.errors import NotFoundError
 import json
-
-
-async def kvx(queue, jobid, x, get=True):
-    nc = await nats.connect("nats://127.0.0.1:14222")
-    js = nc.jetstream()
-
-    # Create a KV
-    kv = await js.create_key_value(bucket='MY_KV')
-    await js.add_stream(name="mystream")
-
-    if get:
-        res = await kv.get(f'{jobid}@{queue}')
-        # Set and retrieve a value
-    else:
-        res = await kv.put(f'{jobid}@{queue}', x.encode())
-    await nc.close()
-    return res
 
 
 def mylog(message):
     print(f"{time.strftime('%Y-%m-%dT%H:%M:%S', time.localtime())} {message}")
     sys.stdout.flush()
     if cfg["syslog"]:
-        os.system(f"logger '{message}'")
+        os.system(f"logger -s {os.getenv('RSYSLOG_SERVER')} '{message}'")
 
 
 async def main():
     parser = argparse.ArgumentParser()
     parser.add_argument('--creds', default="")
     parser.add_argument('-q', '--queue', default="jobs")
-    parser.add_argument('-s', '--servers', default="nats")
+    parser.add_argument('-s', '--servers', default=os.getenv("NATS_SERVER", "nats-svc"))
     parser.add_argument("--syslog", action="store_true", dest="syslog", default=False)
     parser.add_argument('--token', default="")
     parser.add_argument('-v', '--verbose', action="store_true", default=False)
@@ -101,11 +85,20 @@ async def main():
     # Persist messages on jobs' queue (i.e, subject in Jetstream).
     await js.add_stream(name=sname, subjects=[args.queue])
     s = await jsm.stream_info(sname)
-    c = await jsm.consumer_info(sname, consumer)
+    try:
+        c = await jsm.consumer_info(sname, consumer)
+        num_pending = c.num_pending
+    except NotFoundError:
+        num_pending = 0
+        pass
+    except Exception as e:
+        print(e)
+        num_pending = -1
+
     if args.verbose:
         print(s)
         print(c)
-    print(f"{s.config.name} messages {s.state.messages} pending {c.num_pending}")
+    print(f"{s.config.name} messages {s.state.messages} pending {num_pending}")
 
     # Replay messages in queue
     await js.add_stream(name=sname, subjects=[args.queue])

@@ -12,7 +12,7 @@ data:
 apiVersion: v1
 kind: Service
 metadata:
-  name: nats
+  name: nats-svc
   labels:
     app: nats
 spec:
@@ -44,7 +44,7 @@ spec:
     matchLabels:
       app: nats
   replicas: 1
-  serviceName: "nats"
+  serviceName: "nats-svc"
   template:
     metadata:
       labels:

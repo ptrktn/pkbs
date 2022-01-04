@@ -1,6 +1,6 @@
 MODULE      = pkebs
 NS          = $(MODULE)
-SNS         = $(MODULE)-services
+SNS         = $(MODULE)-system
 REGISTRY    = registry.localdomain
 XREGISTRY   = $(REGISTRY):5000
 
