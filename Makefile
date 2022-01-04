@@ -16,8 +16,8 @@ rsyslog-config: rsyslog.conf
 env-configmap: rsyslog-config
 	kubectl create configmap env-config --from-env-file=env-config --dry-run=client -o yaml | kubectl -n $(NS) apply -f -
 
-.PHONY: deploy-services
-deploy-services: rsyslog-config
+.PHONY: deploy-system
+deploy-system: rsyslog-config
 	kubectl create ns $(SNS) 2> /dev/null || true
 	kubectl get ns $(SNS)
 	kubectl create configmap rsyslog-config --from-env-file=rsyslog-config --dry-run=client -o yaml | kubectl -n $(SNS) apply -f -
