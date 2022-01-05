@@ -44,7 +44,7 @@ spec:
     matchLabels:
       app: nats
   replicas: 1
-  serviceName: "nats-svc"
+  serviceName: nats
   template:
     metadata:
       labels:
