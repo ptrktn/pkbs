@@ -14,6 +14,16 @@ spec:
       labels:
         app: nextcloud
     spec:
+      affinity:
+        nodeAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+          - weight: 1
+            preference:
+              matchExpressions:
+                - key: node-role.kubernetes.io/master
+                  operator: In
+                  values:
+                  - "true"
       containers:
         - name: nextcloud
           image: nextcloud
