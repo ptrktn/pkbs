@@ -4,6 +4,10 @@
 
 This software harnesses Kubernetes to run batch jobs.
 
+## Design
+
+![k8s design](./doc/design.svg)
+
 ## Getting Started
 
 ### Prerequisites
@@ -30,9 +34,8 @@ request](https://github.com/ptrktn/pkebs/pulls) (here is a good
 
 ## License
 
-Distributed under the GNU General Public License version 3, refer to
-the file [LICENSE](https://github.com/ptrktn/pkebs/blob/main/LICENSE)
-for more information.
+Licensed under the GNU General Public License version 3, refer to the
+file [LICENSE](LICENSE) for more information.
 
 ## Acknowledgments
 
