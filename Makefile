@@ -82,9 +82,10 @@ clean:
 
 .PHONY: xreload
 xreload:
-	kubectl -n pkebs delete pod --ignore-not-found=true dispatcher
-	kubectl -n pkebs scale --replicas=0 deployment worker-dep
-	$(MAKE) build deploy
+	$(MAKE) build
+	kubectl -n $(NS) delete pod --ignore-not-found=true dispatcher
+	kubectl -n $(NS) scale --replicas=0 deployment worker-dep
+	$(MAKE) deploy
 
 .PHONY: reconfigure-registry
 reconfigure-registry:
