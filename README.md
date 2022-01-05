@@ -34,7 +34,7 @@ request](https://github.com/ptrktn/pkebs/pulls) (here is a good
 
 ## License
 
-Licensed under the GNU General Public License version 3, refer to the
+Licensed under the GNU General Public License Version 3, refer to the
 file [LICENSE](LICENSE) for more information.
 
 ## Acknowledgments
