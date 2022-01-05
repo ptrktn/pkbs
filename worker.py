@@ -282,7 +282,7 @@ async def main():
 
         user = os.getenv("WEBDAV_USER", "admin")
         passwd = os.getenv("WEBDAV_PASSWD", "admin")
-        url = os.getenv("WEBDAV_URL", "http://nextcloud-svc/remote.php/dav/files")
+        url = os.getenv("WEBDAV_URL", "http://nextcloud-svc.pkebs-system/remote.php/dav/files")
 
         if filename and "zip" == upload:
             zipname = os.path.join(os.path.dirname(sandbox), f"{name}-{jobid}.zip")
