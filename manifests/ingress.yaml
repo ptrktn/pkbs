@@ -1,7 +1,7 @@
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
-  name: pkebs-services
+  name: pkbs-system-ing
 spec:
   rules:
   - http:

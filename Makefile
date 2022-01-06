@@ -1,4 +1,4 @@
-MODULE      = pkebs
+MODULE      = pkbs
 NS          = $(MODULE)
 SNS         = $(MODULE)-system
 REGISTRY    = registry.localdomain
@@ -89,7 +89,7 @@ xreload:
 
 .PHONY: reconfigure-registry
 reconfigure-registry:
-	kustomize edit set image WORKER_IMAGE=$(REGISTRY)/pkebs-worker:latest
+	kustomize edit set image WORKER_IMAGE=$(REGISTRY)/pkbs-worker:latest
 
 .PHONY: configure-k3s-agent
 configure-k3s-agent:

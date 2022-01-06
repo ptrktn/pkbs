@@ -37,7 +37,7 @@ async def main(argv):
     parser.add_argument('--creds', default="")
     parser.add_argument('-c', '--command', default="")
     parser.add_argument('-N', '--name', default="qsub")
-    parser.add_argument('-p', '--path', default=os.getenv("WEBDAV_PATH", "pkebs"))
+    parser.add_argument('-p', '--path', default=os.getenv("WEBDAV_PATH", "pkbs"))
     parser.add_argument('-P', '--path-fixed', default=None)
     parser.add_argument('-q', '--queue', default="jobs")
     parser.add_argument('-s', '--servers', default=os.getenv("NATS_SERVER", "nats-svc"))

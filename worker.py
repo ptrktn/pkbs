@@ -199,7 +199,7 @@ async def main():
         name = msg.headers.get("name", "")
         filename = msg.headers.get("filename")
         command = msg.headers.get("command")
-        path = msg.headers.get("path", os.getenv("WEBDAV_PATH", "pkebs"))
+        path = msg.headers.get("path", os.getenv("WEBDAV_PATH", "pkbs"))
         path_fixed = msg.headers.get("path-fixed")
         upload = msg.headers.get("upload", os.getenv("WEBDAV_UPLOAD", "files"))
         
@@ -207,7 +207,7 @@ async def main():
             mylog("Jobs without jobid item in header will not be processed")
             return
 
-        sandbox = os.path.join("/var", "tmp", "pkebs", jobid)
+        sandbox = os.path.join("/var", "tmp", "pkbs", jobid)
         tmpdir = tempname()
         nodefile = tempname()
 
@@ -282,7 +282,7 @@ async def main():
 
         user = os.getenv("WEBDAV_USER", "admin")
         passwd = os.getenv("WEBDAV_PASSWD", "admin")
-        url = os.getenv("WEBDAV_URL", "http://nextcloud-svc.pkebs-system/remote.php/dav/files")
+        url = os.getenv("WEBDAV_URL", "http://nextcloud-svc.pkbs-system/remote.php/dav/files")
 
         if filename and "zip" == upload:
             zipname = os.path.join(os.path.dirname(sandbox), f"{name}-{jobid}.zip")

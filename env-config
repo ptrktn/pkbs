@@ -1,8 +1,8 @@
-NEXTCLOUD_TRUSTED_DOMAINS=nextcloud-svc.pkebs-system 10.*
-WEBDAV_URL=http://nextcloud-svc.pkebs-system/remote.php/dav/files
+NEXTCLOUD_TRUSTED_DOMAINS=nextcloud-svc.pkbs-system 10.*
+WEBDAV_URL=http://nextcloud-svc.pkbs-system/remote.php/dav/files
 WEBDAV_USER=admin
 WEBDAV_PASSWD=admin
-WEBDAV_PATH=pkebs
+WEBDAV_PATH=pkbs
 WEBDAV_UPLOAD=files
 WEBDAV_UPLOAD_FILES_FROM_DIR=.
-RSYSLOG_SERVER=rsyslog-svc.pkebs-system
+RSYSLOG_SERVER=rsyslog-svc.pkbs-system

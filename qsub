@@ -1,6 +1,6 @@
 #!/bin/bash
 
-NS=${PKEBS_NS:-pkebs}
+NS=${PKEBS_NS:-pkbs}
 
 opt_c=""
 opt_N=""
