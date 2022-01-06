@@ -1,0 +1,3 @@
+alias kshell='kubectl -n pkbs exec -it dispatcher -- sh -l'
+alias tailsyslog='kubectl -n pkbs-system exec -it rsyslog -- tail -f /logs/messages.log'
+alias qstat='kubectl -n pkbs exec dispatcher -- ./qstat.py'
