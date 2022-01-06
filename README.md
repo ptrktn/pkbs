@@ -12,13 +12,13 @@ This software harnesses Kubernetes to run batch jobs.
 
 ### Prerequisites
 
-* GNU/Linux workstation or server, virtual machine (VM) works fine.
-* [GNU Make](https://www.gnu.org/software/make/).
-* [Docker](https://docs.docker.com/get-docker/).
-* [kubectl](https://kubernetes.io/docs/tasks/tools/).
-* [kustomize](https://kubectl.docs.kubernetes.io/installation/kustomize/).
-* Kubernetes cluster.
-* Optional: access to an external WebDAV (e.g., [NextCloud](https://nextcloud.com)) service.
+* GNU/Linux workstation or server, virtual machine (VM) works fine
+* [GNU Make](https://www.gnu.org/software/make/)
+* [Docker](https://docs.docker.com/get-docker/)
+* [kubectl](https://kubernetes.io/docs/tasks/tools/)
+* [kustomize](https://kubectl.docs.kubernetes.io/installation/kustomize/)
+* Kubernetes cluster
+* Optional: access to an external WebDAV (e.g., [NextCloud](https://nextcloud.com)) service
 
 ### Installation
 
