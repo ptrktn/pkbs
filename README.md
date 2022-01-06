@@ -26,15 +26,15 @@ This software harnesses Kubernetes to run batch jobs.
 
 Commands can be read from standard input.
 ```
-echo "echo 'Hello, World!'" | qsub -N HelloWorld
+echo "sleep 1" | qsub -N sleep
 ```
 The `qsub` can be invoked with an executable file as an argument.
 ```
-qsub -N ScriptedJob job.sh
+qsub -N calc examples/calculation/calc.sh
 ```
 The `qsub` can be invoked with a directory name as an argument. In this case, the directory must include a file named `run.sh` at the top level. The contents of the directory is then zipped up and submitted for scheduling. There zip file can be at most 1 MB.
 ```
-qsub -N JobFromDirectory ~/example/job
+qsub -N hello-world examples/hello-world
 ```
 In all cases the payload can be up to 1 MB.
 

@@ -103,7 +103,7 @@ else
 	tmp=$(mktemp -t stdin.XXXXXXX)
 	chmod u+x $tmp
 	cat <&0 > $tmp
-	opt_N="STDIN"
+	[ -z "$opt_N" ] && opt_N="STDIN"
 	qsub $tmp
 	unlink $tmp
 fi
