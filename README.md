@@ -8,6 +8,10 @@ This software harnesses Kubernetes to run batch jobs.
 
 ![k8s design](./doc/design.svg)
 
+## Design
+
+![job flowchart](./doc/flow.svg)
+
 ## Getting Started
 
 ### Prerequisites
