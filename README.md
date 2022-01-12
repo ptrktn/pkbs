@@ -8,8 +8,6 @@ This software harnesses Kubernetes to run batch jobs.
 
 ![k8s design](./doc/design.svg)
 
-## Design
-
 ![job flowchart](./doc/flow.svg)
 
 ## Getting Started
@@ -50,6 +48,7 @@ requests can be reported by creating a new
 documentation contributions should be provided by creating a [pull
 request](https://github.com/ptrktn/pkbs/pulls) (here is a good
 [tutorial](https://www.dataschool.io/how-to-contribute-on-github/)).
+Use imperative mood in commit messages.
 
 ## License
 
