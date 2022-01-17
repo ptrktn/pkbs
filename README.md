@@ -8,7 +8,23 @@ This software harnesses Kubernetes to run batch jobs.
 
 ![k8s design](./doc/design.svg)
 
+Storage service and centralized logging resides in the `pkbs-system`
+namespace. The reference implementation uses NextCloud with persistent
+storage, but external service can also be utilized.  The logical
+'queue' is implemented in the `pkebs` namespace with NATS messaging
+system, `dispatcher` pod, and `worker-dep` deployment.  The horizontal
+autoscaler `worker-hpa` dynamically adjusts the worker replicas based
+on processing workload.
+
 ![job flowchart](./doc/flow.svg)
+
+Right: schematics of the job processing flow.  The `qsub` invoked
+by the user (1) submits the job to the `dispatcher` pod, which then publishes
+it (2) to the NATS JetStream and creates the job's bookkeeping data
+(3) in the key-value store.  The workers get their input (4) from the
+JetStream and update the job state data (5) in the key-value
+store. Worker instances have no persistent storage, therefore they
+upload (6) their results to a storage service.
 
 ## Getting Started
 
