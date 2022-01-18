@@ -31,6 +31,7 @@ import hashlib
 import requests
 import json
 import nanoid
+from shutil import rmtree
 
 
 cfg = {
@@ -54,29 +55,13 @@ def md5sum(fname):
     return hash_md5.hexdigest()
 
 
-"""
-import logging
-from http.client import HTTPConnection  # py3
-
-log = logging.getLogger('urllib3')
-log.setLevel(logging.DEBUG)
-
-# logging from urllib3 to console
-ch = logging.StreamHandler()
-ch.setLevel(logging.DEBUG)
-log.addHandler(ch)
-
-# print statements from `http.client.HTTPConnection` to console/stdout
-HTTPConnection.debuglevel = 1
-"""
-
+# FIXME retry
 def webdav_mkdir(url, user, passwd, path):
     r = requests.request('MKCOL', f"{url}/{user}/{path}", auth=(user, passwd))
     if 201 == r.status_code:
         mylog(f"Folder {path} has been created")
     elif 405 == r.status_code:
-        pass
-        # mylog (f"Folder {path} already exists")
+        mylog (f"Folder {path} already exists")
     elif 409 == r.status_code:
         mylog(f"Parent of folder {path} does not exist")
     else:
@@ -262,22 +247,28 @@ async def main():
         else:
             command = msg.data.decode("utf-8")
 
-        ji = await jobinfo(jobid)
         mylog(f"Job {jobid} command is: {command}")
+
+        # Update job info: started
         ji = await jobinfo(jobid)
         t1 = time.time()
         ji["started"] = t1
         ji["status"] = "running"
         ji["node"] = os.getenv("HOSTNAME", "UNDEFINED")
         await jobinfo(jobid, ji)
+
+        # Run the job
         status = os.system(f"{pbsenv} && {command}")
         t2 = time.time()
         wallclock = round(t2 - t1, 2)
+
+        # Update job info: finished
         ji["exit_code"] = status >> 8
         ji["finished"] = t2
         ji["status"] = "finished"
         ji["wallclock"] = wallclock
         await jobinfo(jobid, ji)
+
         mylog(f"Job {jobid} exited with status {status} and the elapsed wallclock time was {wallclock} seconds")
 
         user = os.getenv("WEBDAV_USER", "admin")
@@ -287,30 +278,37 @@ async def main():
         if filename and "zip" == upload:
             zipname = os.path.join(os.path.dirname(sandbox), f"{name}-{jobid}.zip")
             zip_dir(zipname, sandbox)
-            # FIXME path_fixed
             status = webdav_upload(url, user, passwd, path, zipname)
-            # FIXME cleanup
+            # FIXME cleanup zip
         elif filename and "files" == upload:
+            xfiles = {}
+            webdav_mkdirp(url, user, passwd, path)
+            webdav_mkdir(url, user, passwd, os.path.join(path, f"{name}-{jobid}"))
+            # FIXME path_fixed
             for root, subdirs, files in os.walk(sandbox):
                 for subdir in subdirs:
-                    # FIXME
-                    continue
-                    xdir = os.path.join(path, jobid, os.path.join(root, subdir)[1+len(sandbox):])
+                    xdir = os.path.join(path, f"{name}-{jobid}", os.path.join(root, subdir)[1+len(sandbox):])
                     mylog(f"mkdir {xdir}")
-                    webdav_mkdir(svc, user, passwd, os.path.join("/", path, xdir))
+                    webdav_mkdir(url, user, passwd, xdir)
                 for fname in files:
                     xfile = os.path.join(path, f"{name}-{jobid}", os.path.join(root, fname)[1+len(sandbox):])
-                    # FIXME path_fixed
-                    webdav_upload(url, user, passwd, os.path.dirname(xfile), os.path.join(root, fname))
+                    xfiles[os.path.join(root, fname)] = os.path.dirname(xfile)
+
+            for fname in xfiles:
+                webdav_upload(url, user, passwd, xfiles[fname], fname, False)
         else:
             mylog("The build-in upload is skipped")
+
         mylog(f"Processing {jobid} is completed")
 
         if os.path.isfile(nodefile):
             os.unlink(nodefile)
 
         if os.path.isdir(tmpdir):
-            os.system(f"rm -fr {tmpdir}")
+            rmtree(tmpdir)
+
+        if os.path.isdir(sandbox):
+            rmtree(sandbox)
 
     # Create a pull-based consumer
     sub = await js.pull_subscribe(args.queue, consumer, stream=sname)
