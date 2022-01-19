@@ -10,7 +10,7 @@ install:
 	/bin/false
 
 rsyslog-config: rsyslog.conf
-	echo "RSYSLOG_CONFIG_BASE64=`base64 -w 0 < rsyslog.conf`" >> $@
+	echo "RSYSLOG_CONFIG_BASE64=`base64 -w 0 < rsyslog.conf`" > $@
 
 .PHONY: env-configmap
 env-configmap: rsyslog-config
