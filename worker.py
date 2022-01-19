@@ -32,18 +32,26 @@ import requests
 import json
 import nanoid
 from shutil import rmtree
-
+import logging
+from logging.handlers import SysLogHandler
+import socket
 
 cfg = {
-    "syslog": False
+    "logger": None
 }
+
+class ContextFilter(logging.Filter):
+    hostname = socket.gethostname()
+    def filter(self, record):
+        record.hostname = ContextFilter.hostname
+        return True
 
 
 def mylog(message):
     print(f"{time.strftime('%Y-%m-%dT%H:%M:%S', time.localtime())} {message}")
     sys.stdout.flush()
-    if cfg["syslog"]:
-        os.system(f"logger '{message}'")
+    if cfg["logger"]:
+        cfg["logger"].info(message)
 
 
 # https://stackoverflow.com/a/3431838
@@ -125,8 +133,16 @@ async def main():
     args, unknown = parser.parse_known_args()
 
     if args.syslog:
-        # FIXME import netsyslog?
-        cfg["syslog"] = True
+        address = (os.getenv("RSYSLOG_SERVER", "rsyslog-svc.pkbs-system"), 514)
+        syslog = SysLogHandler(address=address)
+        syslog.addFilter(ContextFilter())
+        fmt = "%(asctime)s %(hostname)s %(message)s"
+        formatter = logging.Formatter(fmt, datefmt='%b %d %H:%M:%S')
+        syslog.setFormatter(formatter)
+        logger = logging.getLogger()
+        logger.addHandler(syslog)
+        logger.setLevel(logging.DEBUG)
+        cfg["logger"] = logger
 
     async def error_cb(e):
         # mylog("Error:", e)

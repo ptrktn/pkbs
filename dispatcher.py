@@ -25,11 +25,27 @@ import nats
 import nanoid
 from nats.errors import TimeoutError
 import json
+import logging
+from logging.handlers import SysLogHandler
+import socket
+
+cfg = {
+    "logger": None
+}
+
+
+class ContextFilter(logging.Filter):
+    hostname = socket.gethostname()
+    def filter(self, record):
+        record.hostname = ContextFilter.hostname
+        return True
 
 
 def mylog(message):
     print(f"{time.strftime('%Y-%m-%dT%H:%M:%S', time.localtime())} {message}")
     sys.stdout.flush()
+    if cfg["logger"]:
+        cfg["logger"].info(message)
 
 
 async def main(argv):
@@ -41,6 +57,7 @@ async def main(argv):
     parser.add_argument('-P', '--path-fixed', default=None)
     parser.add_argument('-q', '--queue', default="jobs")
     parser.add_argument('-s', '--servers', default=os.getenv("NATS_SERVER", "nats-svc"))
+    parser.add_argument("--syslog", action="store_true", dest="syslog", default=False)
     parser.add_argument('-u', '--upload', default=os.getenv("WEBDAV_UPLOAD", "zip"), help="one of files, zip or none")
     parser.add_argument('--token', default="")
     parser.add_argument("file", metavar="FILE", type=str, nargs='?')
@@ -59,6 +76,18 @@ async def main(argv):
             "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
         )
         return nanoid.generate(custom, 11)
+
+    if args.syslog:
+        address = (os.getenv("RSYSLOG_SERVER", "rsyslog-svc.pkbs-system"), 514)
+        syslog = SysLogHandler(address=address)
+        syslog.addFilter(ContextFilter())
+        fmt = "%(asctime)s %(hostname)s %(message)s"
+        formatter = logging.Formatter(fmt, datefmt='%b %d %H:%M:%S')
+        syslog.setFormatter(formatter)
+        logger = logging.getLogger()
+        logger.addHandler(syslog)
+        logger.setLevel(logging.DEBUG)
+        cfg["logger"] = logger
 
     jobid = f"{newjobid()}"
 

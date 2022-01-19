@@ -44,7 +44,7 @@ submit_job() {
 	[ 1000000 -lt $bytes ] && errr "File $src is too large: $bytes bytes"
 
 	kubectl -n $NS cp $src dispatcher:${dst} || errr "File transfer failed"
-	kubectl -n $NS exec dispatcher -- /usr/src/app/dispatcher.py $options $dst || errr "Dispatch failed"
+	kubectl -n $NS exec dispatcher -- /usr/src/app/dispatcher.py --syslog $options $dst || errr "Dispatch failed"
 	unlink $src
 }
 
