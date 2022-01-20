@@ -6,8 +6,8 @@ spec:
   containers:
     - name: dispatcher
       image: WORKER_IMAGE
-      imagePullPolicy: Always
       command: ["/bin/sleep", "365d"]
       envFrom:
-      - configMapRef:
-          name: env-config
+        - configMapRef:
+            name: env-config
+      imagePullPolicy: Always

@@ -13,24 +13,24 @@ spec:
         app: worker
     spec:
       containers:
-      - name: worker
-        image: WORKER_IMAGE
-        imagePullPolicy: Always
-        command: ["./worker.py", "--syslog"]
-        env:
-        - name: POD_NAME
-          valueFrom:
-            fieldRef:
-              fieldPath: metadata.name
-        - name: POD_NAMESPACE
-          valueFrom:
-            fieldRef:
-              fieldPath: metadata.namespace
-        envFrom:
-        - configMapRef:
-            name: env-config
-        resources:
-          limits:
-            cpu: "900m"
-          requests:
-            cpu: "300m"
+        - name: worker
+          image: WORKER_IMAGE
+          command: ["./worker.py", "--syslog"]
+          envFrom:
+            - configMapRef:
+                name: env-config
+          env:
+            - name: POD_NAME
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.name
+            - name: POD_NAMESPACE
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.namespace
+          resources:
+            limits:
+              cpu: "900m"
+            requests:
+              cpu: "300m"
+          imagePullPolicy: Always

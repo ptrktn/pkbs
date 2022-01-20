@@ -1,10 +1,8 @@
----
 apiVersion: apps/v1
 kind: StatefulSet
 metadata:
   name: nextcloud-ss
 spec:
-  serviceName: nextcloud
   replicas: 1
   selector:
     matchLabels:
@@ -14,55 +12,56 @@ spec:
       labels:
         app: nextcloud
     spec:
-      affinity:
-        nodeAffinity:
-          preferredDuringSchedulingIgnoredDuringExecution:
-          - weight: 1
-            preference:
-              matchExpressions:
-                - key: node-role.kubernetes.io/master
-                  operator: In
-                  values:
-                  - "true"
       containers:
         - name: nextcloud
           image: nextcloud
-          imagePullPolicy: IfNotPresent
-          env:
-          - name: SQLITE_DATABASE
-            value: mynextclouddb
-          - name: NEXTCLOUD_ADMIN_USER
-            valueFrom:
-              configMapKeyRef:
-                name: env-config
-                key: WEBDAV_USER
-          - name: NEXTCLOUD_ADMIN_PASSWORD
-            valueFrom:
-              configMapKeyRef:
-                name: env-config
-                key: WEBDAV_PASSWD
-          # nextcloud-svc is required for pods
-          # 10.* is required to access the service from local network
-          - name: NEXTCLOUD_TRUSTED_DOMAINS
-            valueFrom:
-              configMapKeyRef:
-                name: env-config
-                key: NEXTCLOUD_TRUSTED_DOMAINS
           ports:
             - name: web
               containerPort: 80
+          env:
+            - name: SQLITE_DATABASE
+              value: mynextclouddb
+            - name: NEXTCLOUD_ADMIN_USER
+              valueFrom:
+                configMapKeyRef:
+                  name: env-config
+                  key: WEBDAV_USER
+            - name: NEXTCLOUD_ADMIN_PASSWORD
+              valueFrom:
+                configMapKeyRef:
+                  name: env-config
+                  key: WEBDAV_PASSWD
+            # nextcloud-svc is required for pods
+            # 10.* is required to access the service from local network
+            - name: NEXTCLOUD_TRUSTED_DOMAINS
+              valueFrom:
+                configMapKeyRef:
+                  name: env-config
+                  key: NEXTCLOUD_TRUSTED_DOMAINS
           volumeMounts:
             - name: nextcloud-storage
               mountPath: /var/www/html
+          imagePullPolicy: IfNotPresent
+      affinity:
+        nodeAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+            - preference:
+                matchExpressions:
+                  - key: node-role.kubernetes.io/master
+                    operator: In
+                    values:
+                      - "true"
+              weight: 1
   volumeClaimTemplates:
     - metadata:
         name: nextcloud-storage
       spec:
-        accessModes: ["ReadWriteOnce"]
-        storageClassName: local-path
         resources:
           requests:
             storage: 100Mi
+        accessModes: ["ReadWriteOnce"]
+        storageClassName: local-path
+  serviceName: nextcloud
 ---
 apiVersion: v1
 kind: Service
@@ -71,10 +70,9 @@ metadata:
   labels:
     app: nextcloud
 spec:
-  ports:
-  - port: 80
-    name: web
-  clusterIP: None
   selector:
     app: nextcloud
----
+  ports:
+    - name: web
+      port: 80
+  clusterIP: None

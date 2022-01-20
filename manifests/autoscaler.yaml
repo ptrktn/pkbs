@@ -3,17 +3,12 @@ kind: HorizontalPodAutoscaler
 metadata:
   name: worker-hpa
 spec:
-  scaleTargetRef:
-    apiVersion: apps/v1
-    kind: Deployment
-    name: worker-dep
-  minReplicas: 1
-  maxReplicas: 3
   behavior:
     scaleDown:
       stabilizationWindowSeconds: 600
     scaleUp:
       stabilizationWindowSeconds: 120
+  maxReplicas: 3
   metrics:
     - type: Resource
       resource:
@@ -21,3 +16,8 @@ spec:
         target:
           type: Utilization
           averageUtilization: 33
+  minReplicas: 1
+  scaleTargetRef:
+    name: worker-dep
+    apiVersion: apps/v1
+    kind: Deployment
