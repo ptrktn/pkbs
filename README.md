@@ -60,11 +60,12 @@ In all cases the payload can be up to 1 MB.
 
 All contributions are welcome. Bug reports, suggestions and feature
 requests can be reported by creating a new
-[issue](https://github.com/ptrktn/pkbs/issues). Code and
-documentation contributions should be provided by creating a [pull
+[issue](https://github.com/ptrktn/pkbs/issues). Code and documentation
+contributions should be provided by creating a [pull
 request](https://github.com/ptrktn/pkbs/pulls) (here is a good
 [tutorial](https://www.dataschool.io/how-to-contribute-on-github/)).
-Use imperative mood in commit messages.
+Run `make tidy-sources` before committing and use imperative mood in
+commit messages.
 
 ## License
 
