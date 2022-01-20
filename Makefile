@@ -4,6 +4,14 @@ SNS         = $(MODULE)-system
 REGISTRY    = registry.localdomain
 XREGISTRY   = $(REGISTRY):5000
 
+MY_GCP_LOGIN      ?= MODIFY_THIS_OR_SET_ENV_VARIABLE
+MY_GCP_PROJECT_ID ?= MODIFY_THIS_OR_SET_ENV_VARIABLE
+MY_GCP_CLUSTER    ?= pkbs-cluster
+# Hamina in Finland is a good choice
+MY_GCP_ZONE       ?= europe-north1-b
+
+AUTOPEP8 = autopep8 --in-place --aggressive
+
 # FIXME default rule
 .PHONY: install
 install:
@@ -70,8 +78,7 @@ stop-registry:
 	(docker ps | grep -qw registry) && docker container stop registry
 
 .PHONY: build
-build:
-	for i in *.py ; do echo Checking file $$i ; python3 -m py_compile $$i || exit 1 ; test -x "$$i" || exit 1 ; done ; rm -fr __pycache__
+build: tidy-sources
 	docker build . -t $(MODULE)-worker
 	docker tag $(MODULE)-worker $(XREGISTRY)/$(MODULE)-worker
 	docker push $(XREGISTRY)/$(MODULE)-worker
@@ -126,3 +133,34 @@ test: nats-server nats
 	./dispatcher.py -s nats://localhost:14222  -c "sleep 1"
 	./worker.py -s nats://localhost:14222 --max-jobs 1
 	./qstat.py -s nats://localhost:14222
+
+# FIXME https://docs.ansible.com/ansible/2.7/modules/gcp_container_cluster_module.html
+.PHONY: bootstrap-gcp
+bootstrap-gcp:
+	gcloud auth print-access-token $(MY_GCP_LOGIN) > /dev/null 2>&1 || gcloud auth login $(MY_GCP_LOGIN)
+	gcloud config get-value project | gcloud config get-value project | grep -v -q -F "(unset)" || gcloud config set project $(MY_GCP_PROJECT_ID)
+	test "$(MY_GCP_PROJECT_ID)" = "`gcloud config get-value project`"
+	(gcloud services list | grep -w container.googleapis.com) || gcloud services enable container.googleapis.com
+	test "" != "`gcloud container clusters list | grep -w $(MY_GCP_CLUSTER)`" || gcloud container clusters create $(MY_GCP_CLUSTER) --zone=$(MY_GCP_ZONE) --release-channel=rapid --cluster-version=1.22
+	gcloud container clusters get-credentials $(MY_GCP_CLUSTER) --zone=$(MY_GCP_ZONE)
+
+.PHONY: test-gcp
+test-gcp:
+	gcloud container clusters list | grep -w $(MY_GCP_CLUSTER) | grep -w RUNNING
+
+.PHONY: clean-gcp
+clean-gcp:
+	@echo "ATTENTION: $(MY_GCP_CLUSTER) cluster in $(MY_GCP_ZONE) will be deleted in 30 secs!"
+	@echo "Press CTRL-C to interrupt."
+	sleep 30
+	gcloud container clusters delete $(MY_GCP_CLUSTER) --zone=$(MY_GCP_ZONE)
+
+.PHONY: tidy-sources
+tidy-sources:
+	for i in *.py ; \
+       do echo Checking file $$i ; \
+       test -x "$$i" || exit 1 ; \
+       python3 -m py_compile $$i || exit 1 ; \
+       $(AUTOPEP8) $$i || exit 1 ; \
+    done ; rm -fr __pycache__
+	find manifests -type f -name '*.yaml' -exec kustomize cfg fmt {} \;
