@@ -36,6 +36,7 @@ cfg = {
 
 class ContextFilter(logging.Filter):
     hostname = socket.gethostname()
+
     def filter(self, record):
         record.hostname = ContextFilter.hostname
         return True
@@ -53,12 +54,32 @@ async def main(argv):
     parser.add_argument('--creds', default="")
     parser.add_argument('-c', '--command', default="")
     parser.add_argument('-N', '--name', default="qsub")
-    parser.add_argument('-p', '--path', default=os.getenv("WEBDAV_PATH", "pkbs"))
+    parser.add_argument(
+        '-p',
+        '--path',
+        default=os.getenv(
+            "WEBDAV_PATH",
+            "pkbs"))
     parser.add_argument('-P', '--path-fixed', default=None)
     parser.add_argument('-q', '--queue', default="jobs")
-    parser.add_argument('-s', '--servers', default=os.getenv("NATS_SERVER", "nats-svc"))
-    parser.add_argument("--syslog", action="store_true", dest="syslog", default=False)
-    parser.add_argument('-u', '--upload', default=os.getenv("WEBDAV_UPLOAD", "zip"), help="one of files, zip or none")
+    parser.add_argument(
+        '-s',
+        '--servers',
+        default=os.getenv(
+            "NATS_SERVER",
+            "nats-svc"))
+    parser.add_argument(
+        "--syslog",
+        action="store_true",
+        dest="syslog",
+        default=False)
+    parser.add_argument(
+        '-u',
+        '--upload',
+        default=os.getenv(
+            "WEBDAV_UPLOAD",
+            "zip"),
+        help="one of files, zip or none")
     parser.add_argument('--token', default="")
     parser.add_argument("file", metavar="FILE", type=str, nargs='?')
     args, unknown = parser.parse_known_args()
@@ -135,7 +156,7 @@ async def main(argv):
     except Exception as e:
         mylog(e)
         sys.exit(1)
-        
+
     # Create JetStream context.
     js = nc.jetstream()
 

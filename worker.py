@@ -40,8 +40,10 @@ cfg = {
     "logger": None
 }
 
+
 class ContextFilter(logging.Filter):
     hostname = socket.gethostname()
+
     def filter(self, record):
         record.hostname = ContextFilter.hostname
         return True
@@ -69,7 +71,7 @@ def webdav_mkdir(url, user, passwd, path):
     if 201 == r.status_code:
         mylog(f"Folder {path} has been created")
     elif 405 == r.status_code:
-        mylog (f"Folder {path} already exists")
+        mylog(f"Folder {path} already exists")
     elif 409 == r.status_code:
         mylog(f"Parent of folder {path} does not exist")
     else:
@@ -105,15 +107,18 @@ def webdav_upload(url, user, passwd, path, filename, mkdirs=True):
             md5_orig = md5sum(filename).lower()
             md5_dest = r.headers.get("X-Hash-Md5").lower()
             if md5_orig == md5_dest:
-                mylog(f"File {filename} uploaded to server {url} user {user} path {path}")
+                mylog(
+                    f"File {filename} uploaded to server {url} user {user} path {path}")
                 return True
             else:
-                mylog(f"File {filename} checksum mismatch: orig={m5d_orig} dest={md5_dest}")
-    mylog(f"File {filename} upload to server {url} user {user} path {path} failed")
+                mylog(
+                    f"File {filename} checksum mismatch: orig={m5d_orig} dest={md5_dest}")
+    mylog(
+        f"File {filename} upload to server {url} user {user} path {path} failed")
     return False
 
 
-# https://stackoverflow.com/a/43141399 
+# https://stackoverflow.com/a/43141399
 def zip_dir(zip_name: str, source_dir: Union[str, os.PathLike]):
     src_path = Path(source_dir).expanduser().resolve(strict=True)
     # compresslevel=9 ???
@@ -127,8 +132,17 @@ async def main():
     parser.add_argument('--creds', default="")
     parser.add_argument('--max-jobs', default=None)
     parser.add_argument('-q', '--queue', default="jobs")
-    parser.add_argument('-s', '--servers', default=os.getenv("NATS_SERVER", "nats-svc"))
-    parser.add_argument("--syslog", action="store_true", dest="syslog", default=False)
+    parser.add_argument(
+        '-s',
+        '--servers',
+        default=os.getenv(
+            "NATS_SERVER",
+            "nats-svc"))
+    parser.add_argument(
+        "--syslog",
+        action="store_true",
+        dest="syslog",
+        default=False)
     parser.add_argument('--token', default="")
     args, unknown = parser.parse_known_args()
 
@@ -173,7 +187,7 @@ async def main():
 
     consumer = "workers"
     sname = f"{args.queue}-stream"
-    
+
     # Create JetStream context
     js = nc.jetstream()
 
@@ -203,7 +217,7 @@ async def main():
         path = msg.headers.get("path", os.getenv("WEBDAV_PATH", "pkbs"))
         path_fixed = msg.headers.get("path-fixed")
         upload = msg.headers.get("upload", os.getenv("WEBDAV_UPLOAD", "files"))
-        
+
         if not(jobid):
             mylog("Jobs without jobid item in header will not be processed")
             return
@@ -285,29 +299,50 @@ async def main():
         ji["wallclock"] = wallclock
         await jobinfo(jobid, ji)
 
-        mylog(f"Job {jobid} exited with status {status} and the elapsed wallclock time was {wallclock} seconds")
+        mylog(
+            f"Job {jobid} exited with status {status} and the elapsed wallclock time was {wallclock} seconds")
 
         user = os.getenv("WEBDAV_USER", "admin")
         passwd = os.getenv("WEBDAV_PASSWD", "admin")
-        url = os.getenv("WEBDAV_URL", "http://nextcloud-svc.pkbs-system/remote.php/dav/files")
+        url = os.getenv(
+            "WEBDAV_URL",
+            "http://nextcloud-svc.pkbs-system/remote.php/dav/files")
 
         if filename and "zip" == upload:
-            zipname = os.path.join(os.path.dirname(sandbox), f"{name}-{jobid}.zip")
+            zipname = os.path.join(
+                os.path.dirname(sandbox),
+                f"{name}-{jobid}.zip")
             zip_dir(zipname, sandbox)
             status = webdav_upload(url, user, passwd, path, zipname)
             # FIXME cleanup zip
         elif filename and "files" == upload:
             xfiles = {}
             webdav_mkdirp(url, user, passwd, path)
-            webdav_mkdir(url, user, passwd, os.path.join(path, f"{name}-{jobid}"))
+            webdav_mkdir(
+                url, user, passwd, os.path.join(
+                    path, f"{name}-{jobid}"))
             # FIXME path_fixed
             for root, subdirs, files in os.walk(sandbox):
                 for subdir in subdirs:
-                    xdir = os.path.join(path, f"{name}-{jobid}", os.path.join(root, subdir)[1+len(sandbox):])
+                    xdir = os.path.join(
+                        path,
+                        f"{name}-{jobid}",
+                        os.path.join(
+                            root,
+                            subdir)[
+                            1 +
+                            len(sandbox):])
                     mylog(f"mkdir {xdir}")
                     webdav_mkdir(url, user, passwd, xdir)
                 for fname in files:
-                    xfile = os.path.join(path, f"{name}-{jobid}", os.path.join(root, fname)[1+len(sandbox):])
+                    xfile = os.path.join(
+                        path,
+                        f"{name}-{jobid}",
+                        os.path.join(
+                            root,
+                            fname)[
+                            1 +
+                            len(sandbox):])
                     xfiles[os.path.join(root, fname)] = os.path.dirname(xfile)
 
             for fname in xfiles:

@@ -39,8 +39,17 @@ async def main():
     parser = argparse.ArgumentParser()
     parser.add_argument('--creds', default="")
     parser.add_argument('-q', '--queue', default="jobs")
-    parser.add_argument('-s', '--servers', default=os.getenv("NATS_SERVER", "nats-svc"))
-    parser.add_argument("--syslog", action="store_true", dest="syslog", default=False)
+    parser.add_argument(
+        '-s',
+        '--servers',
+        default=os.getenv(
+            "NATS_SERVER",
+            "nats-svc"))
+    parser.add_argument(
+        "--syslog",
+        action="store_true",
+        dest="syslog",
+        default=False)
     parser.add_argument('--token', default="")
     parser.add_argument('-v', '--verbose', action="store_true", default=False)
     args, unknown = parser.parse_known_args()
@@ -78,7 +87,7 @@ async def main():
 
     consumer = f"workers"
     sname = f"{args.queue}-stream"
-    
+
     # Create JetStream context.
     js = nc.jetstream()
 
@@ -141,14 +150,16 @@ async def main():
             out.append(f"{ji['status'][:8]:<8}")
 
             if ji["wallclock"]:
-                out.append(f"{str(timedelta(seconds=int(ji['wallclock']))):<11}")
+                out.append(
+                    f"{str(timedelta(seconds=int(ji['wallclock']))):<11}")
             elif ji["started"]:
-                out.append(f"{str(timedelta(seconds=int(time.time() - ji['started']))):<11}")
+                out.append(
+                    f"{str(timedelta(seconds=int(time.time() - ji['started']))):<11}")
             else:
                 x = "--:--:--"
                 out.append(f"{x:<11}")
 
-            if None == ji["exit_code"]:
+            if None is ji["exit_code"]:
                 ji["exit_code"] = "N/A"
             out.append(f"{ji['exit_code']:<3}")
 
