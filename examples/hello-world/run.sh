@@ -8,4 +8,4 @@ mylog() {
 	logger -n ${RSYSLOG_SERVER} "$msg"
 }
 
-mylog "Hello, World!"
+mylog "Hello, World! I'm ${PBS_JOBNAME}, a batch job."

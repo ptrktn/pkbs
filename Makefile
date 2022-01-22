@@ -164,3 +164,16 @@ tidy-sources:
        $(AUTOPEP8) $$i || exit 1 ; \
     done ; rm -fr __pycache__
 	find manifests -type f -name '*.yaml' -exec kustomize cfg fmt {} \;
+
+.PHONY: test-deploy
+test-deploy:
+	kubectl -n $(NS) get po ; \
+	NAME=`dd if=/dev/random count=1 2> /dev/null | sha1sum | \
+	awk '{print $$1}'` ; \
+	./qsub -N test-deploy-$$NAME examples/hello-world ; \
+	sleep 60 # FIXME ; \
+	kubectl -n $(SNS) exec rsyslog -- cat /logs/messages.log | \
+	grep "Hello, World! I'm test-deploy-$${NAME}, a batch job." || exit 1
+
+.PHONY: test-build-deploy
+test-build-deploy: xreload test-deploy
