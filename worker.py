@@ -49,9 +49,10 @@ class ContextFilter(logging.Filter):
         return True
 
 
-def mylog(message):
-    print(f"{time.strftime('%Y-%m-%dT%H:%M:%S', time.localtime())} {message}")
-    sys.stdout.flush()
+def mylog(message, stdout=True):
+    if stdout:
+        print(f"{time.strftime('%Y-%m-%dT%H:%M:%S', time.localtime())} {message}")
+        sys.stdout.flush()
     if cfg["logger"]:
         cfg["logger"].info(message)
 
@@ -147,16 +148,24 @@ async def main():
     args, unknown = parser.parse_known_args()
 
     if args.syslog:
-        address = (os.getenv("RSYSLOG_SERVER", "rsyslog-svc.pkbs-system"), 514)
-        syslog = SysLogHandler(address=address)
-        syslog.addFilter(ContextFilter())
-        fmt = "%(asctime)s %(hostname)s %(message)s"
-        formatter = logging.Formatter(fmt, datefmt='%b %d %H:%M:%S')
-        syslog.setFormatter(formatter)
-        logger = logging.getLogger()
-        logger.addHandler(syslog)
-        logger.setLevel(logging.DEBUG)
-        cfg["logger"] = logger
+        try:
+            address = (
+                os.getenv(
+                    "RSYSLOG_SERVER",
+                    "rsyslog-svc.pkbs-system"),
+                514)
+            syslog = SysLogHandler(address=address)
+            syslog.addFilter(ContextFilter())
+            fmt = "%(asctime)s %(hostname)s %(message)s"
+            formatter = logging.Formatter(fmt, datefmt='%b %d %H:%M:%S')
+            syslog.setFormatter(formatter)
+            logger = logging.getLogger()
+            logger.addHandler(syslog)
+            logger.setLevel(logging.DEBUG)
+            cfg["logger"] = logger
+        except Exception as e:
+            # Keep calm and carry on without syslog
+            pass
 
     async def error_cb(e):
         # mylog("Error:", e)

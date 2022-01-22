@@ -130,8 +130,8 @@ xdeps:
 .PHONY: test
 test: nats-server nats
 	$(MAKE) start-nats
-	./dispatcher.py -s nats://localhost:14222  -c "sleep 1"
-	./worker.py -s nats://localhost:14222 --max-jobs 1
+	./dispatcher.py --syslog -s nats://localhost:14222  -c "sleep 1"
+	./worker.py --syslog -s nats://localhost:14222 --max-jobs 1
 	./qstat.py -s nats://localhost:14222
 
 # FIXME https://docs.ansible.com/ansible/2.7/modules/gcp_container_cluster_module.html
