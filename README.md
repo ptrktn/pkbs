@@ -36,7 +36,7 @@ upload (6) their results to a storage service.
 * [kubectl](https://kubernetes.io/docs/tasks/tools/)
 * [kustomize](https://kubectl.docs.kubernetes.io/installation/kustomize/)
 * Kubernetes cluster
-* Optional: access to an external WebDAV (e.g., [NextCloud](https://nextcloud.com)) service
+* Optional: access to an external WebDAV (e.g., [NextCloud](https://nextcloud.com)) service. [Larry's fluffy stuff](https://www.oracle.com/cloud/free/) is a good option for this purpose.
 
 ### Installation
 
