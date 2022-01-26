@@ -75,3 +75,4 @@ file [LICENSE](LICENSE) for more information.
 ## Acknowledgments
 
 * University of Helsinki, for their [DevOps with Kubernetes](https://devopswithkubernetes.com/) course.
+* [Free DNS](https://freedns.afraid.org/), for their share-and-enjoy DNS hosting service.
