@@ -1,8 +1,12 @@
 MODULE      = pkbs
 NS          = $(MODULE)
 SNS         = $(MODULE)-system
-REGISTRY    = registry.localdomain
-XREGISTRY   = $(REGISTRY):5000
+REGISTRY    = docker.io/pkbs
+XREGISTRY   = $(REGISTRY)
+
+# local registry
+# REGISTRY    = registry.localdomain
+# XREGISTRY   = $(REGISTRY):5000
 
 MY_GCP_LOGIN      ?= MODIFY_THIS_OR_SET_ENV_VARIABLE
 MY_GCP_PROJECT_ID ?= MODIFY_THIS_OR_SET_ENV_VARIABLE
