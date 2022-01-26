@@ -24,6 +24,9 @@ rsyslog-config: rsyslog.conf
 env-configmap: rsyslog-config
 	kubectl create configmap env-config --from-env-file=env-config --dry-run=client -o yaml | kubectl -n $(NS) apply -f -
 
+.PHONY: deploy-all
+deploy-all: deploy-system deploy
+
 .PHONY: deploy-system
 deploy-system: rsyslog-config
 	kubectl create ns $(SNS) 2> /dev/null || true
@@ -56,7 +59,6 @@ bootstrap-k3s:
 	curl -sfL https://get.k3s.io | tee k3s_install.sh | sh -s - server --write-kubeconfig-mode "0644" --cluster-init
 	install -d $(HOME)/.kube
 	install -m 0600 /etc/rancher/k3s/k3s.yaml $(HOME)/.kube/config
-	$(MAKE) deploy
 
 .PHONY: clean-k3s
 clean-k3s:
