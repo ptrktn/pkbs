@@ -35,6 +35,9 @@ from shutil import rmtree
 import logging
 from logging.handlers import SysLogHandler
 import socket
+from requests.packages.urllib3.exceptions import InsecureRequestWarning
+
+requests.packages.urllib3.disable_warnings(InsecureRequestWarning)
 
 cfg = {
     "logger": None
@@ -68,9 +71,20 @@ def md5sum(fname):
 
 # FIXME retry
 def webdav_mkdir(url, user, passwd, path):
-    r = requests.request('MKCOL', f"{url}/{user}/{path}", auth=(user, passwd))
+    try:
+        r = requests.request(
+            'MKCOL',
+            f"{url}/{user}/{path}",
+            auth=(
+                user,
+                passwd),
+            verify=False)
+    except requests.exceptions.SSLError:
+        pass
     if 201 == r.status_code:
         mylog(f"Folder {path} has been created")
+    elif 401 == r.status_code:
+        mylog(f"Unauthorized {url} {user} {path}")
     elif 405 == r.status_code:
         mylog(f"Folder {path} already exists")
     elif 409 == r.status_code:
@@ -94,15 +108,19 @@ def webdav_upload(url, user, passwd, path, filename, mkdirs=True):
     with open(filename, 'rb') as fp:
         data = fp.read()
 
-    r = requests.put(
-        f"{url}/{user}/{path}/{os.path.basename(filename)}",
-        data=data,
-        headers={
-            'Content-type': 'application/octet-stream',
-            'Slug': os.path.basename(filename)
-        },
-        auth=(user, passwd)
-    )
+    try:
+        r = requests.put(
+            f"{url}/{user}/{path}/{os.path.basename(filename)}",
+            data=data,
+            headers={
+                'Content-type': 'application/octet-stream',
+                'Slug': os.path.basename(filename)
+            },
+            auth=(user, passwd), verify=False
+        )
+    except requests.exceptions.SSLError:
+        pass
+
     if r.status_code in [201, 204]:
         if r.headers.get("X-Hash-Md5"):
             md5_orig = md5sum(filename).lower()
@@ -218,7 +236,10 @@ async def main():
         )
 
     async def qsub(msg):
-        mylog(f"QSUB {msg.subject} {msg.headers} LEN {len(msg.data)}")
+        tidy_headers = dict(msg.headers)
+        if tidy_headers.get("webdav-passwd"):
+            tidy_headers["webdav-passwd"] = "*****"
+        mylog(f"QSUB {msg.subject} {tidy_headers} LEN {len(msg.data)}")
         jobid = msg.headers["jobid"]
         name = msg.headers.get("name", "")
         filename = msg.headers.get("filename")
@@ -226,6 +247,13 @@ async def main():
         path = msg.headers.get("path", os.getenv("WEBDAV_PATH", "pkbs"))
         path_fixed = msg.headers.get("path-fixed")
         upload = msg.headers.get("upload", os.getenv("WEBDAV_UPLOAD", "files"))
+        url = msg.headers.get("webdav-url", os.getenv(
+            "WEBDAV_URL",
+            "http://nextcloud-svc.pkbs-system/remote.php/dav/files"))
+        user = msg.headers.get("webdav-user",
+                               os.getenv("WEBDAV_USER", "admin"))
+        passwd = msg.headers.get("webdav-passwd",
+                                 os.getenv("WEBDAV_PASSWD", "admin"))
 
         if not(jobid):
             mylog("Jobs without jobid item in header will not be processed")
@@ -310,12 +338,6 @@ async def main():
 
         mylog(
             f"Job {jobid} exited with status {status} and the elapsed wallclock time was {wallclock} seconds")
-
-        user = os.getenv("WEBDAV_USER", "admin")
-        passwd = os.getenv("WEBDAV_PASSWD", "admin")
-        url = os.getenv(
-            "WEBDAV_URL",
-            "http://nextcloud-svc.pkbs-system/remote.php/dav/files")
 
         if filename and "zip" == upload:
             zipname = os.path.join(

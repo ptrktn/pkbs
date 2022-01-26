@@ -52,8 +52,11 @@ def mylog(message, stdout=True):
 
 async def main(argv):
     parser = argparse.ArgumentParser()
-    parser.add_argument('--creds', default="")
+    parser.add_argument('-a', '--webdav-url', default=None)
+    parser.add_argument('-U', '--webdav-user', default=None)
+    parser.add_argument('-P', '--webdav-passwd', default=None)
     parser.add_argument('-c', '--command', default="")
+    parser.add_argument('--creds', default="")
     parser.add_argument('-N', '--name', default="qsub")
     parser.add_argument(
         '-p',
@@ -61,7 +64,7 @@ async def main(argv):
         default=os.getenv(
             "WEBDAV_PATH",
             "pkbs"))
-    parser.add_argument('-P', '--path-fixed', default=None)
+    parser.add_argument('-f', '--fixed-path', default=None)
     parser.add_argument('-q', '--queue', default="jobs")
     parser.add_argument(
         '-s',
@@ -148,8 +151,17 @@ async def main(argv):
         # FIXME
         sys.exit(1)
 
-    if args.path_fixed:
-        headers["path-fixed"] = args.path_fixed
+    if args.fixed_path:
+        headers["fixed-path"] = args.fixed_path
+
+    if args.webdav_url:
+        headers["webdav-url"] = args.webdav_url
+
+    if args.webdav_user:
+        headers["webdav-user"] = args.webdav_user
+
+    if args.webdav_passwd:
+        headers["webdav-passwd"] = args.webdav_passwd
 
     if len(args.creds) > 0:
         options["user_credentials"] = args.creds
