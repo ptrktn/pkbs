@@ -139,7 +139,7 @@ setup_tmp() {
 # --- download ---
 download() {
     [ $# -eq 2 ] || fatal 'download needs exactly 2 arguments'
-
+    cd $TMP_DIR
     case $DOWNLOADER in
         curl)
             curl -o $1 -sfL $2
@@ -187,7 +187,7 @@ download_and_verify() {
 	local xprog
 	for xprog in make unzip ; do
 		test -x "$(command -v ${xprog})" || \
-			$SUDO $package_installer install -y {xprog} || \
+			$SUDO $package_installer install -y ${xprog} || \
 			fatal "Installation of ${prog} failed"
 	done
 
@@ -222,8 +222,9 @@ download_and_verify() {
 
 	# --- kustomize ---
 	test -x "$(command -v kustomize)" || {
-		curl -s "https://raw.githubusercontent.com/kubernetes-sigs/kustomize/master/hack/install_kustomize.sh" | tee ${TMP_DIR}/install_kustomize.sh \
-			| bash || fatal "Installation of kustomize failed"
+		( cd $TMP_DIR && curl -s "https://raw.githubusercontent.com/kubernetes-sigs/kustomize/master/hack/install_kustomize.sh" | tee ${TMP_DIR}/install_kustomize.sh \
+		| bash || fatal "Installation of kustomize failed" )
+		$SUDO install -o root -g root -m 0755 ${TMP_DIR}/kustomize /usr/local/bin
 		info 'kustomize installed'
 	}
 
