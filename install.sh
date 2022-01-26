@@ -185,7 +185,7 @@ download_and_verify() {
 		$SUDO $package_installer install -y bash-completion
 	
 	local xprog
-	for xprog in make unzip ; do
+	for xprog in make zip unzip ; do
 		test -x "$(command -v ${xprog})" || \
 			$SUDO $package_installer install -y ${xprog} || \
 			fatal "Installation of ${prog} failed"
