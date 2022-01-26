@@ -6,12 +6,12 @@ metadata:
     app: rsyslog
 spec:
   containers:
-    - name: rsyslog
-      image: rsyslog/syslog_appliance_alpine
-      envFrom:
-        - configMapRef:
-            name: rsyslog-config
-      imagePullPolicy: IfNotPresent
+  - name: rsyslog
+    image: rsyslog/syslog_appliance_alpine
+    envFrom:
+    - configMapRef:
+        name: rsyslog-config
+    imagePullPolicy: IfNotPresent
 ---
 apiVersion: v1
 kind: Service
@@ -23,8 +23,8 @@ spec:
   selector:
     app: rsyslog
   ports:
-    - name: rsyslog
-      protocol: UDP
-      port: 514
-      targetPort: 514
+  - name: rsyslog
+    protocol: UDP
+    port: 514
+    targetPort: 514
   clusterIP: None

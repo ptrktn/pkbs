@@ -4,12 +4,12 @@ metadata:
   name: pkbs-system-ing
 spec:
   rules:
-    - http:
-        paths:
-          - backend:
-              service:
-                name: nextcloud-svc
-                port:
-                  number: 80
-            path: /
-            pathType: Prefix
+  - http:
+      paths:
+      - backend:
+          service:
+            name: nextcloud-svc
+            port:
+              number: 80
+        path: /
+        pathType: Prefix

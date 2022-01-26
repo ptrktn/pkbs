@@ -17,18 +17,18 @@ spec:
   selector:
     app: nats
   ports:
-    - name: client
-      port: 4222
-    - name: cluster
-      port: 6222
-    - name: monitor
-      port: 8222
-    - name: metrics
-      port: 7777
-    - name: leafnodes
-      port: 7422
-    - name: gateways
-      port: 7522
+  - name: client
+    port: 4222
+  - name: cluster
+    port: 6222
+  - name: monitor
+    port: 8222
+  - name: metrics
+    port: 7777
+  - name: leafnodes
+    port: 7422
+  - name: gateways
+    port: 7522
   clusterIP: None
 ---
 apiVersion: apps/v1
@@ -57,77 +57,77 @@ spec:
       # to the server without restarting the pod.
       shareProcessNamespace: true
       containers:
-        - name: nats
-          image: nats:alpine
-          command:
-            - "nats-server"
-            - "--config"
-            - "/etc/nats-config/nats.conf"
-            - "--jetstream"
-            - "--remote_syslog"
-            - "udp://rsyslog-svc.pkbs-system:514"
-          ports:
-            - name: client
-              hostPort: 4222
-              containerPort: 4222
-            - name: leafnodes
-              hostPort: 7422
-              containerPort: 7422
-            - name: cluster
-              containerPort: 6222
-            - name: monitor
-              containerPort: 8222
-            - name: metrics
-              containerPort: 7777
-          # Required to be able to define an environment variable
-          # that refers to other environment variables.  This env var
-          # is later used as part of the configuration file.
-          env:
-            - name: POD_NAME
-              valueFrom:
-                fieldRef:
-                  fieldPath: metadata.name
-            - name: POD_NAMESPACE
-              valueFrom:
-                fieldRef:
-                  fieldPath: metadata.namespace
-            - name: CLUSTER_ADVERTISE
-              value: $(POD_NAME).nats.$(POD_NAMESPACE).svc
-          volumeMounts:
-            - name: config-volume
-              mountPath: /etc/nats-config
-            - name: pid
-              mountPath: /var/run/nats
-          # Liveness/Readiness probes against the monitoring
-          #
-          livenessProbe:
-            httpGet:
-              port: 8222
-              path: /
-            initialDelaySeconds: 10
-            timeoutSeconds: 5
-          readinessProbe:
-            httpGet:
-              port: 8222
-              path: /
-            initialDelaySeconds: 10
-            timeoutSeconds: 5
-          # Gracefully stop NATS Server on pod deletion or image upgrade.
-          #
-          lifecycle:
-            preStop:
-              exec:
-                # Using the alpine based NATS image, we add an extra sleep that is
-                # the same amount as the terminationGracePeriodSeconds to allow
-                # the NATS Server to gracefully terminate the client connections.
-                #
-                command: ["/bin/sh", "-c", "/nats-server -sl=ldm=/var/run/nats/nats.pid && /bin/sleep 60"]
-          imagePullPolicy: IfNotPresent
+      - name: nats
+        image: nats:alpine
+        command:
+        - "nats-server"
+        - "--config"
+        - "/etc/nats-config/nats.conf"
+        - "--jetstream"
+        - "--remote_syslog"
+        - "udp://rsyslog-svc.pkbs-system:514"
+        ports:
+        - name: client
+          hostPort: 4222
+          containerPort: 4222
+        - name: leafnodes
+          hostPort: 7422
+          containerPort: 7422
+        - name: cluster
+          containerPort: 6222
+        - name: monitor
+          containerPort: 8222
+        - name: metrics
+          containerPort: 7777
+        # Required to be able to define an environment variable
+        # that refers to other environment variables.  This env var
+        # is later used as part of the configuration file.
+        env:
+        - name: POD_NAME
+          valueFrom:
+            fieldRef:
+              fieldPath: metadata.name
+        - name: POD_NAMESPACE
+          valueFrom:
+            fieldRef:
+              fieldPath: metadata.namespace
+        - name: CLUSTER_ADVERTISE
+          value: $(POD_NAME).nats.$(POD_NAMESPACE).svc
+        volumeMounts:
+        - name: config-volume
+          mountPath: /etc/nats-config
+        - name: pid
+          mountPath: /var/run/nats
+        # Liveness/Readiness probes against the monitoring
+        #
+        livenessProbe:
+          httpGet:
+            port: 8222
+            path: /
+          initialDelaySeconds: 10
+          timeoutSeconds: 5
+        readinessProbe:
+          httpGet:
+            port: 8222
+            path: /
+          initialDelaySeconds: 10
+          timeoutSeconds: 5
+        # Gracefully stop NATS Server on pod deletion or image upgrade.
+        #
+        lifecycle:
+          preStop:
+            exec:
+              # Using the alpine based NATS image, we add an extra sleep that is
+              # the same amount as the terminationGracePeriodSeconds to allow
+              # the NATS Server to gracefully terminate the client connections.
+              #
+              command: ["/bin/sh", "-c", "/nats-server -sl=ldm=/var/run/nats/nats.pid && /bin/sleep 60"]
+        imagePullPolicy: IfNotPresent
       # Common volumes for the containers
       volumes:
-        - name: config-volume
-          configMap:
-            name: nats-config
-        - name: pid
-          emptyDir: {}
+      - name: config-volume
+        configMap:
+          name: nats-config
+      - name: pid
+        emptyDir: {}
   serviceName: nats

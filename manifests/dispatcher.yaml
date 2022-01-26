@@ -4,10 +4,10 @@ metadata:
   name: dispatcher
 spec:
   containers:
-    - name: dispatcher
-      image: WORKER_IMAGE
-      command: ["/bin/sleep", "365d"]
-      envFrom:
-        - configMapRef:
-            name: env-config
-      imagePullPolicy: Always
+  - name: dispatcher
+    image: WORKER_IMAGE
+    command: ["/bin/sleep", "365d"]
+    envFrom:
+    - configMapRef:
+        name: env-config
+    imagePullPolicy: Always
