@@ -64,6 +64,7 @@ async def main(argv):
         default=os.getenv(
             "WEBDAV_PATH",
             "pkbs"))
+    parser.add_argument('-F', '--files-from', default=None)
     parser.add_argument('-f', '--fixed-path', default=None)
     parser.add_argument('-q', '--queue', default="jobs")
     parser.add_argument(
@@ -116,7 +117,7 @@ async def main(argv):
             syslog.setFormatter(formatter)
             logger = logging.getLogger()
             logger.addHandler(syslog)
-            logger.setLevel(logging.DEBUG)
+            logger.setLevel(logging.INFO)
             cfg["logger"] = logger
         except Exception as e:
             # Keep calm and carry on without syslog
@@ -150,6 +151,9 @@ async def main(argv):
     else:
         # FIXME
         sys.exit(1)
+
+    if args.files_from:
+        headers["files-from"] = args.files_from
 
     if args.fixed_path:
         headers["fixed-path"] = args.fixed_path

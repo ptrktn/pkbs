@@ -179,7 +179,7 @@ async def main():
             syslog.setFormatter(formatter)
             logger = logging.getLogger()
             logger.addHandler(syslog)
-            logger.setLevel(logging.DEBUG)
+            logger.setLevel(logging.INFO)
             cfg["logger"] = logger
         except Exception as e:
             # Keep calm and carry on without syslog
@@ -245,7 +245,7 @@ async def main():
         filename = msg.headers.get("filename")
         command = msg.headers.get("command")
         path = msg.headers.get("path", os.getenv("WEBDAV_PATH", "pkbs"))
-        path_fixed = msg.headers.get("path-fixed")
+        fixed_path = msg.headers.get("fixed-path")
         upload = msg.headers.get("upload", os.getenv("WEBDAV_UPLOAD", "files"))
         url = msg.headers.get("webdav-url", os.getenv(
             "WEBDAV_URL",
@@ -344,6 +344,7 @@ async def main():
                 os.path.dirname(sandbox),
                 f"{name}-{jobid}.zip")
             zip_dir(zipname, sandbox)
+            webdav_mkdirp(url, user, passwd, path)
             status = webdav_upload(url, user, passwd, path, zipname)
             # FIXME cleanup zip
         elif filename and "files" == upload:
@@ -352,7 +353,7 @@ async def main():
             webdav_mkdir(
                 url, user, passwd, os.path.join(
                     path, f"{name}-{jobid}"))
-            # FIXME path_fixed
+            # FIXME fixed_path
             for root, subdirs, files in os.walk(sandbox):
                 for subdir in subdirs:
                     xdir = os.path.join(

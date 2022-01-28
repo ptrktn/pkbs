@@ -4,6 +4,7 @@ NS=${PKEBS_NS:-pkbs}
 
 opt_a="${WEBDAV_URL}"
 opt_c=""
+opt_F=""
 opt_f=""
 opt_N=""
 opt_P="${WEBDAV_PASSWD}"
@@ -23,16 +24,14 @@ usage() {
 	echo "If payload is not given, commands are read from the standard input."
 	echo "Options are as follows"
 	echo "    -a    WebDAV server address (WEBDAV_URL)"
+	echo "    -f    fixed upload path"
 	echo "    -h    show help"
 	echo "    -N    name the job"
-	echo "    -n    specify namespace"
+	echo "    -q    queue (i.e., namespace)"
 	echo "    -p    upload path prefix"
 	echo "    -P    password (WEBDAV_PASSWD)"
 	echo "    -U    username (WEBDAV_USER)"
 	echo "    -u    what to upload, one of files, zip or none (WEBDAV_UPLOAD)"
-	# WEBDAV_PATH=pkbs
-	# WEBDAV_UPLOAD_FILES_FROM_DIR=.
-	# RSYSLOG_SERVER=rsyslog-svc.pkbs-system
 	exit 1
 }
 
@@ -42,10 +41,12 @@ submit_job() {
  	local bytes=$(stat -c %s $src)
 	local options=""
 
-	[ -z "$opt_N" ] || options="-N $opt_N"
 	[ -z "$opt_a" ] || options="$options -a $opt_a"
+	[ -z "$opt_f" ] || options="$options -f $opt_f"
+	[ -z "$opt_N" ] || options="$options -N $opt_N"
 	[ -z "$opt_p" ] || options="$options -p $opt_p"
 	[ -z "$opt_P" ] || options="$options -P $opt_P"
+	[ -z "$opt_U" ] || options="$options -U $opt_U"
 	[ -z "$opt_u" ] || options="$options -u $opt_u"
 	[ -z "$opt_c" ] || options="$options -c $opt_c"
 
@@ -76,10 +77,16 @@ qsub() {
 	submit_job $dst $dst
 }
 
-while getopts "a:hN:n:P:p:U:u:" opt; do
+while getopts "a:f:F:hN:n:P:p:q:U:u:" opt; do
     case $opt in
 		a)
-            opt_a=$OPTARG
+			opt_a=$OPTARG
+            ;;
+		F)
+			opt_F=$(echo $OPTARG | sed -e 's:[^A-Za-z0-9._/\-]::g' -e 's:^/::' -e 's:/$::')
+            ;;
+		f)
+			opt_f=$(echo $OPTARG | sed -e 's:[^A-Za-z0-9._/\-]::g' -e 's:^/::' -e 's:/$::')
             ;;
         h)
             usage
@@ -87,17 +94,14 @@ while getopts "a:hN:n:P:p:U:u:" opt; do
         N)
             opt_N=$(echo $OPTARG | sed -e 's:[^A-Za-z0-9._\-]::g')
             ;;
-		n)
-            NS=$(echo $OPTARG | sed -e 's:[^A-Za-z0-9._\-]::g')
-            ;;
         P)
             opt_P=$OPTARG
             ;;
         p)
             opt_p=$(echo $OPTARG | sed -e 's:[^A-Za-z0-9._/\-]::g' -e 's:^/::' -e 's:/$::')
             ;;
-        f)
-            opt_P=$(echo $OPTARG | sed -e 's:[^A-Za-z0-9._/\-]::g' -e 's:^/::' -e 's:/$::')
+		q)
+            NS=$(echo $OPTARG | sed -e 's:[^A-Za-z0-9._\-]::g')
             ;;
 		U)
             opt_U=$OPTARG

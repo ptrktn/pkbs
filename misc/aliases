@@ -3,3 +3,4 @@ alias tailf='kubectl -n pkbs-system exec -it rsyslog -- tail -f /logs/messages.l
 alias tails='kubectl -n pkbs-system exec -it rsyslog -- tail /logs/messages.log'
 alias qstat='kubectl -n pkbs exec dispatcher -- ./qstat.py'
 alias getpo='kubectl -n pkbs get po'
+alias getspo='kubectl -n pkbs-system get po'
