@@ -60,6 +60,7 @@ spec:
         requests:
           storage: 100Mi
       accessModes: ["ReadWriteOnce"]
+      # FIXME
       storageClassName: local-path
   serviceName: nextcloud
 ---
