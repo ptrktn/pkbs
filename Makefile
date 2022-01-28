@@ -3,6 +3,8 @@ NS          = $(MODULE)
 SNS         = $(MODULE)-system
 REGISTRY    = docker.io/pkbs
 XREGISTRY   = $(REGISTRY)
+NEXTCLOUD   = 1
+AUTOPEP8    = autopep8 --in-place --aggressive --aggressive --max-line-length 128
 
 # local registry
 # REGISTRY    = registry.localdomain
@@ -14,7 +16,7 @@ MY_GCP_CLUSTER    ?= pkbs-cluster
 # Hamina in Finland is a good choice
 MY_GCP_ZONE       ?= europe-north1-b
 
-AUTOPEP8 = autopep8 --in-place --aggressive
+
 
 # FIXME default rule
 .PHONY: install
@@ -37,7 +39,7 @@ deploy-system: rsyslog-config
 	kubectl get ns $(SNS)
 	kubectl create configmap rsyslog-config --from-env-file=rsyslog-config --dry-run=client -o yaml | kubectl -n $(SNS) apply -f -
 	$(MAKE) NS=$(SNS) env-configmap
-	kubectl -n $(SNS) apply -f manifests/nextcloud.yaml
+	[ 0 -eq $(NEXTCLOUD) ] || kubectl -n $(SNS) apply -f manifests/nextcloud.yaml
 	kubectl -n $(SNS) apply -f manifests/rsyslog.yaml
 	kubectl -n $(SNS) apply -f manifests/ingress.yaml
 
@@ -103,6 +105,10 @@ xreload:
 .PHONY: reconfigure-registry
 reconfigure-registry:
 	kustomize edit set image WORKER_IMAGE=$(REGISTRY)/pkbs-worker:latest
+
+.PHONY: local-registry-test
+local-registry-test:
+	$(MAKE) REGISTRY=registry.localdomain XREGISTRY=registry.localdomain:5000 reconfigure-registry xreload
 
 .PHONY: configure-k3s-agent
 configure-k3s-agent:
@@ -183,3 +189,11 @@ test-deploy:
 
 .PHONY: test-build-deploy
 test-build-deploy: xreload test-deploy
+
+.PHONY: nextcloud-port-forward
+nextcloud-port-forward:
+	kubectl -n $(SNS) port-forward nextcloud-ss-0 8080:80
+
+.PHONY: install-metrics-server
+install-metrics-server:
+	kubectl -n kube-system get deployments.apps metrics-server || kubectl apply -f https://github.com/kubernetes-sigs/metrics-server/releases/latest/download/components.yaml
