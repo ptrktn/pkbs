@@ -183,7 +183,7 @@ download_and_verify() {
 
 	test -e /etc/bash_completion || \
 		$SUDO $package_installer install -y bash-completion
-	
+
 	local xprog
 	for xprog in make zip unzip ; do
 		test -x "$(command -v ${xprog})" || \
@@ -198,7 +198,7 @@ download_and_verify() {
 	}
 	test "0" = "$(id -u)" || {
 		groups | grep -qw docker || {
-			$SUDO usermod -aG ${LOGNAME} docker
+			$SUDO usermod -aG docker ${LOGNAME}
 			info "User ${LOGNAME} added to docker group - log out once"
 		}
 	}
