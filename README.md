@@ -36,7 +36,7 @@ upload (6) their results to a storage service.
 * [kubectl](https://kubernetes.io/docs/tasks/tools/)
 * [kustomize](https://kubectl.docs.kubernetes.io/installation/kustomize/)
 * Kubernetes cluster
-* Optional: access to an external WebDAV (e.g., [NextCloud](https://nextcloud.com)) service. [Larry's fluffy stuff](https://www.oracle.com/cloud/free/) is a good option for this purpose.
+* Optional: an external WebDAV service
 
 ### Installation
 
@@ -76,3 +76,6 @@ file [LICENSE](LICENSE) for more information.
 
 * University of Helsinki, for their [DevOps with Kubernetes](https://devopswithkubernetes.com/) course.
 * [Free DNS](https://freedns.afraid.org/), for their share-and-enjoy DNS hosting service.
+* (TeraCLOUD)[https://teracloud.jp] provides WebDAV service
+ with a 10 GiB free plan. Please consider using referral code 5N2C6
+ to get an extra 8 GiB storage.
