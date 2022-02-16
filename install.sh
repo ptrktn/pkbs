@@ -1,4 +1,7 @@
 #!/bin/sh
+#
+# https://raw.githubusercontent.com/ptrktn/pkbs/main/install.sh
+#
 # Original source: https://get.k3s.io
 
 set -e
@@ -170,11 +173,11 @@ download_and_verify() {
         package_installer=zypper
 	elif [ "${ID_LIKE%%[ ]*}" = "debian" ]; then
 		package_installer=apt
-	elif [ "${ID_LIKE%%[ ]*}" = "rhel fedora" ]; then
+	elif [ "${ID_LIKE%%[ ]*}" = "rhel" ]; then
 		package_installer=yum
 		DOCKER_PKG=docker
 	else
-		fatal "Unsupported flavor: ${ID_LIKE}"
+		fatal "Unsupported flavor: '${ID_LIKE}'"
     fi
 
     if [ "${package_installer}" = "yum" ] && [ -x /usr/bin/dnf ]; then
