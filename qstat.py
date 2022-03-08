@@ -115,7 +115,7 @@ async def main():
     cinfo = await js.add_consumer(
         sname,
         durable_name="qstat",
-        deliver_policy=nats.js.api.DeliverPolicy.all,
+        deliver_policy=nats.js.api.DeliverPolicy.ALL,
         filter_subject=args.queue
     )
 
