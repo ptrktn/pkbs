@@ -122,7 +122,7 @@ spec:
               # the NATS Server to gracefully terminate the client connections.
               #
               command: ["/bin/sh", "-c", "/nats-server -sl=ldm=/var/run/nats/nats.pid && /bin/sleep 60"]
-        imagePullPolicy: IfNotPresent
+        imagePullPolicy: Always
       # Common volumes for the containers
       volumes:
       - name: config-volume
