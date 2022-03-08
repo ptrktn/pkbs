@@ -25,12 +25,12 @@ spec:
           valueFrom:
             configMapKeyRef:
               name: env-config
-              key: WEBDAV_USER
+              key: WEBDAV_LOGIN
         - name: NEXTCLOUD_ADMIN_PASSWORD
           valueFrom:
             configMapKeyRef:
               name: env-config
-              key: WEBDAV_PASSWD
+              key: WEBDAV_PASSWORD
         # nextcloud-svc is required for pods
         # 10.* is required to access the service from local network
         - name: NEXTCLOUD_TRUSTED_DOMAINS

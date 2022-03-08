@@ -36,9 +36,8 @@ import logging
 from logging.handlers import SysLogHandler
 import socket
 from requests.packages.urllib3.exceptions import InsecureRequestWarning
-import uwebdavclient
+from uwebdavclient.client import Client
 
-requests.packages.urllib3.disable_warnings(InsecureRequestWarning)
 
 cfg = {
     "logger": None
@@ -59,83 +58,6 @@ def mylog(message, stdout=True):
         sys.stdout.flush()
     if cfg["logger"]:
         cfg["logger"].info(message)
-
-
-# https://stackoverflow.com/a/3431838
-def md5sum(fname):
-    hash_md5 = hashlib.md5()
-    with open(fname, "rb") as f:
-        for chunk in iter(lambda: f.read(4096), b""):
-            hash_md5.update(chunk)
-    return hash_md5.hexdigest()
-
-
-# FIXME retry
-def webdav_mkdir(url, user, passwd, path):
-    try:
-        r = requests.request(
-            'MKCOL',
-            f"{url}/{user}/{path}",
-            auth=(
-                user,
-                passwd),
-            verify=False)
-    except requests.exceptions.SSLError:
-        pass
-    if 201 == r.status_code:
-        mylog(f"Folder {path} has been created")
-    elif 401 == r.status_code:
-        mylog(f"Unauthorized {url} {user} {path}")
-    elif 405 == r.status_code:
-        mylog(f"Folder {path} already exists")
-    elif 409 == r.status_code:
-        mylog(f"Parent of folder {path} does not exist")
-    else:
-        mylog(f"Unhandled status code: {r.status_code}")
-
-
-def webdav_mkdirp(url, user, passwd, path):
-    newpath = ""
-    for i in path.split("/"):
-        newpath = f"{newpath}/{i}"
-        webdav_mkdir(url, user, passwd, newpath)
-
-
-# FIXME retry
-def webdav_upload(url, user, passwd, path, filename, mkdirs=True):
-    if mkdirs:
-        webdav_mkdirp(url, user, passwd, path)
-
-    with open(filename, 'rb') as fp:
-        data = fp.read()
-
-    try:
-        r = requests.put(
-            f"{url}/{user}/{path}/{os.path.basename(filename)}",
-            data=data,
-            headers={
-                'Content-type': 'application/octet-stream',
-                'Slug': os.path.basename(filename)
-            },
-            auth=(user, passwd), verify=False
-        )
-    except requests.exceptions.SSLError:
-        pass
-
-    if r.status_code in [201, 204]:
-        if r.headers.get("X-Hash-Md5"):
-            md5_orig = md5sum(filename).lower()
-            md5_dest = r.headers.get("X-Hash-Md5").lower()
-            if md5_orig == md5_dest:
-                mylog(
-                    f"File {filename} uploaded to server {url} user {user} path {path}")
-                return True
-            else:
-                mylog(
-                    f"File {filename} checksum mismatch: orig={m5d_orig} dest={md5_dest}")
-    mylog(
-        f"File {filename} upload to server {url} user {user} path {path} failed")
-    return False
 
 
 # https://stackoverflow.com/a/43141399
@@ -238,27 +160,44 @@ async def main():
 
     async def qsub(msg):
         tidy_headers = dict(msg.headers)
-        if tidy_headers.get("webdav-passwd"):
-            tidy_headers["webdav-passwd"] = "*****"
+        if tidy_headers.get("webdav-password"):
+            tidy_headers["webdav-password"] = "*****"
         mylog(f"QSUB {msg.subject} {tidy_headers} LEN {len(msg.data)}")
         jobid = msg.headers["jobid"]
         name = msg.headers.get("name", "")
         filename = msg.headers.get("filename")
         command = msg.headers.get("command")
-        path = msg.headers.get("path", os.getenv("WEBDAV_PATH", "pkbs"))
-        fixed_path = msg.headers.get("fixed-path")
-        upload = msg.headers.get("upload", os.getenv("WEBDAV_UPLOAD", "files"))
-        url = msg.headers.get("webdav-url", os.getenv(
-            "WEBDAV_URL",
-            "http://nextcloud-svc.pkbs-system/remote.php/dav/files"))
-        user = msg.headers.get("webdav-user",
-                               os.getenv("WEBDAV_USER", "admin"))
-        passwd = msg.headers.get("webdav-passwd",
-                                 os.getenv("WEBDAV_PASSWD", "admin"))
+        fixed_path = msg.headers.get("fixed-path")  # FIXME
+        upload = msg.headers.get("upload", os.getenv("WEBDAV_UPLOAD", "files")).lower()
+        webdav_hostname = msg.headers.get("webdav-hostname", os.getenv(
+            "WEBDAV_HOSTNAME",
+            "http://nextcloud-svc.pkbs-system"))
+        webdav_root = msg.headers.get("webdav-root", os.getenv(
+            "WEBDAV_ROOT",
+            "remote.php/dav/files/admin"))
+        webdav_path = msg.headers.get("path", os.getenv("WEBDAV_PATH", "pkbs"))
+        webdav_user = msg.headers.get("webdav-login",
+                                      os.getenv("WEBDAV_LOGIN", "admin"))
+        webdav_passwd = msg.headers.get("webdav-password",
+                                        os.getenv("WEBDAV_PASSWORD", "admin"))
+        webdav_insecure = bool(msg.headers.get("webdav-insecure",
+                                               os.getenv("WEBDAV_INSECURE", "0")))
 
         if not(jobid):
             mylog("Jobs without jobid item in header will not be processed")
             return
+
+        if upload in ["zip", "files"]:
+            mylog(f"Upload {upload}")
+            webdav_options = {
+                'hostname': webdav_hostname,
+                'login': webdav_user,
+                'password': webdav_passwd,
+                'root': webdav_root,
+                'insecure': webdav_insecure,
+                'verbose': True,
+            }
+            webdav = Client(webdav_options)
 
         sandbox = os.path.join("/var", "tmp", "pkbs", jobid)
         tmpdir = tempname()
@@ -284,7 +223,6 @@ async def main():
         )
 
         if filename:
-            # FIXME clean sandbox
             ofile = "stdout.txt"
             efile = "stderr.txt"
             os.makedirs(sandbox)
@@ -345,20 +283,19 @@ async def main():
                 os.path.dirname(sandbox),
                 f"{name}-{jobid}.zip")
             zip_dir(zipname, sandbox)
-            webdav_mkdirp(url, user, passwd, path)
-            status = webdav_upload(url, user, passwd, path, zipname)
+            webdav.mkdir(webdav_path)
+            status = webdav.upload_sync(webdav_path, zipname)  # FIXME
             # FIXME cleanup zip
         elif filename and "files" == upload:
             xfiles = {}
-            webdav_mkdirp(url, user, passwd, path)
-            webdav_mkdir(
-                url, user, passwd, os.path.join(
-                    path, f"{name}-{jobid}"))
+            webdav.mkdir(webdav_path)
+            webdav.mkdir(os.path.join(
+                webdav_path, f"{name}-{jobid}"))
             # FIXME fixed_path
             for root, subdirs, files in os.walk(sandbox):
                 for subdir in subdirs:
                     xdir = os.path.join(
-                        path,
+                        webdav_path,
                         f"{name}-{jobid}",
                         os.path.join(
                             root,
@@ -366,20 +303,20 @@ async def main():
                             1 +
                             len(sandbox):])
                     mylog(f"mkdir {xdir}")
-                    webdav_mkdir(url, user, passwd, xdir)
+                    webdav.mkdir(xdir)
                 for fname in files:
                     xfile = os.path.join(
-                        path,
+                        webdav_path,
                         f"{name}-{jobid}",
                         os.path.join(
                             root,
                             fname)[
                             1 +
                             len(sandbox):])
-                    xfiles[os.path.join(root, fname)] = os.path.dirname(xfile)
+                    xfiles[os.path.join(root, fname)] = xfile
 
             for fname in xfiles:
-                webdav_upload(url, user, passwd, xfiles[fname], fname, False)
+                webdav.upload_sync(xfiles[fname], fname)
         else:
             mylog("The build-in upload is skipped")
 

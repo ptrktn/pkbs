@@ -52,10 +52,16 @@ def mylog(message, stdout=True):
 
 async def main(argv):
     parser = argparse.ArgumentParser()
-    parser.add_argument('-a', '--webdav-url', default=None)
-    parser.add_argument('-U', '--webdav-user', default=None)
-    parser.add_argument('-P', '--webdav-passwd', default=None)
+    parser.add_argument('-a', '--webdav-hostname', default=None)
     parser.add_argument('-c', '--command', default="")
+    parser.add_argument(
+        "--insecure",
+        action="store_true",
+        dest="insecure",
+        default=False)
+    parser.add_argument('-l', '--webdav-login', default=None)
+    parser.add_argument('-P', '--webdav-password', default=None)
+    parser.add_argument('-r', '--webdav-root', default=None)  # FIXME
     parser.add_argument('--creds', default="")
     parser.add_argument('-N', '--name', default="qsub")
     parser.add_argument(
@@ -83,8 +89,8 @@ async def main(argv):
         '--upload',
         default=os.getenv(
             "WEBDAV_UPLOAD",
-            "zip"),
-        help="one of files, zip or none")
+            "files"),
+        help="one of files, none, or zip")
     parser.add_argument('--token', default="")
     parser.add_argument("file", metavar="FILE", type=str, nargs='?')
     args, unknown = parser.parse_known_args()
@@ -134,8 +140,12 @@ async def main(argv):
         "jobid": jobid,
         "name": args.name,
         "path": args.path,
-        "upload": args.upload.lower()
+        "upload": args.upload.lower(),
+        "insecure": "0",
     }
+
+    if args.insecure:
+        headers["webdav-insecure"] = "1"
 
     if args.file:
         if os.path.isfile(args.file):
@@ -158,14 +168,14 @@ async def main(argv):
     if args.fixed_path:
         headers["fixed-path"] = args.fixed_path
 
-    if args.webdav_url:
-        headers["webdav-url"] = args.webdav_url
+    if args.webdav_hostname:
+        headers["webdav-hostname"] = args.webdav_hostname
 
-    if args.webdav_user:
-        headers["webdav-user"] = args.webdav_user
+    if args.webdav_login:
+        headers["webdav-login"] = args.webdav_login
 
-    if args.webdav_passwd:
-        headers["webdav-passwd"] = args.webdav_passwd
+    if args.webdav_password:
+        headers["webdav-password"] = args.webdav_password
 
     if len(args.creds) > 0:
         options["user_credentials"] = args.creds
