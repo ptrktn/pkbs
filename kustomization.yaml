@@ -7,5 +7,5 @@ resources:
 - manifests/autoscaler.yaml
 images:
 - name: WORKER_IMAGE
-  newName: registry.localdomain/pkbs-worker
+  newName: docker.io/pkbs/pkbs-worker
   newTag: latest
