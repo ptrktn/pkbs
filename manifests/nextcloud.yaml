@@ -60,8 +60,8 @@ spec:
         requests:
           storage: 100Mi
       accessModes: ["ReadWriteOnce"]
-      # FIXME
-      storageClassName: local-path
+      # storageClassName needs to be declared only in special cases, k8s will use the "default" storageclassif it's not explicitly declared
+      # storageClassName: local-path
   serviceName: nextcloud
 ---
 apiVersion: v1
