@@ -64,8 +64,8 @@ requests can be reported by creating a new
 contributions should be provided by creating a [pull
 request](https://github.com/ptrktn/pkbs/pulls) (here is a good
 [tutorial](https://www.dataschool.io/how-to-contribute-on-github/)).
-Run `make tidy-sources` before committing and use imperative mood in
-commit messages.
+Run `make tidy-sources` before committing and use [imperative
+mood](https://cbea.ms/git-commit/) in commit messages.
 
 ## License
 
