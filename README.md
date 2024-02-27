@@ -76,6 +76,6 @@ file [LICENSE](LICENSE) for more information.
 
 * University of Helsinki, for their [DevOps with Kubernetes](https://devopswithkubernetes.com/) course.
 * [Free DNS](https://freedns.afraid.org/), for their share-and-enjoy DNS hosting service.
-* (TeraCLOUD)[https://teracloud.jp] provides WebDAV service
- with a 10 GiB free plan. Please consider using referral code 5N2C6
- to get an extra 8 GiB storage.
+* (InfiniCLOUD)[https://infini-cloud.net/] provides WebDAV service
+ with a 20 GiB free plan. Please consider using referral code 5N2C6
+ to get extra storage.
